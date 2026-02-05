@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum StaffRole {
+  admin
+  administration
+  collection
+  processing
+  quality_control
+  storage
+}
+
+enum BirthStatus {
+  planned
+  contacted
+  delivered
+  cancelled
+}
+
+enum SampleStatus {
+  collected
+  processing
+  external_testing
+  qc
+  stored
+  rejected
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  fullName  String
+  phone     String
+  email     String?
+  address   String?
+
+  dateOfBirth DateTime?
+  edd          DateTime?
+
+  contractSigned   Boolean   @default(false)
+  contractSignedAt DateTime?
+
+  status    String
+
+  births    BirthTracking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Staff {
+  id        String   @id @default(uuid())
+  fullName  String
+  phone     String?
+  email     String?
+
+  role      StaffRole
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+}
+
+model BirthTracking {
+  id        String   @id @default(uuid())
+  customer  Customer @relation(fields: [customerId], references: [id])
+  customerId String
+
+  edd               DateTime?
+  actualBirthDate   DateTime?
+  actualBirthTime   DateTime?
+
+  hospitalName      String?
+  hospitalAddress   String?
+
+  birthType         String?
+  babiesCount       Int      @default(1)
+
+  status            BirthStatus
+  note              String?
+
+  samples           Sample[]
+  followUps         BirthFollowUp[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BirthFollowUp {
+  id        String   @id @default(uuid())
+  birth     BirthTracking @relation(fields: [birthId], references: [id])
+  birthId  String
+
+  followType String
+  plannedDate DateTime?
+  contactedAt DateTime?
+
+  staffId String?
+  note    String?
+}
+
+model Sample {
+  id        String   @id @default(uuid())
+  birth     BirthTracking @relation(fields: [birthId], references: [id])
+  birthId  String
+
+  babyOrder Int
+  collectedBy String?
+  collectedAt DateTime?
+  condition String?
+
+  status SampleStatus
+
+  processing SampleProcessing[]     // 1 Sample có nhiều Processings
+  externalTests ExternalTest[]      // 1 Sample có nhiều ExternalTests
+  qualityControl QualityControl[]   // 1 Sample có nhiều QC
+  storage Storage[]                 // 1 Sample có thể được lưu nhiều lần
+
+  createdAt DateTime @default(now())
+}
+
+model SampleProcessing {
+  id        String   @id @default(uuid())
+  sample    Sample   @relation(fields: [sampleId], references: [id])
+  sampleId String
+
+  processedBy String?
+  processedAt DateTime?
+  note String?
+}
+
+model ExternalTest {
+  id        String   @id @default(uuid())
+  sample    Sample   @relation(fields: [sampleId], references: [id])
+  sampleId String
+
+  labName String
+  sentAt DateTime?
+  resultReceivedAt DateTime?
+  resultStatus String
+  note String?
+}
+
+model QualityControl {
+  id        String   @id @default(uuid())
+  sample    Sample   @relation(fields: [sampleId], references: [id])
+  sampleId String
+
+  qcStaffId String?
+  checkedAt DateTime?
+  status String
+  note String?
+}
+
+model StorageTank {
+  id        String   @id @default(uuid())
+  tankCode  String   @unique
+  description String?
+  location String?
+
+  storages Storage[]
+}
+
+model Storage {
+  id        String   @id @default(uuid())
+  sample    Sample   @relation(fields: [sampleId], references: [id])
+  sampleId String
+
+  tank     StorageTank @relation(fields: [tankId], references: [id])
+  tankId  String
+
+  storedAt DateTime?
+  removedAt DateTime?
+  status String
+}
