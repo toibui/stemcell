@@ -7,6 +7,7 @@ type Staff = {
   phone?: string;
   email?: string;
   role: string;
+  password: string;
   isActive: boolean;
 };
 const roleOptions = [
@@ -24,6 +25,7 @@ export default function CreateStaffPage() {
     fullName: '',
     phone: '',
     email: '',
+    password: '',
     role: 'admin', // default role, thay đổi theo enum StaffRole của bạn
     isActive: true,
   });
@@ -107,6 +109,20 @@ export default function CreateStaffPage() {
             value={staff.email || ''}
             onChange={handleChange}
             className="w-full border px-2 py-1 rounded"
+          />
+        </div>
+
+        {/* Password */}
+        <div>
+          <label className="block mb-1">Password</label>
+          <input
+            type="password"
+            name="password"
+            value={staff.password}
+            onChange={handleChange}
+            className="w-full border px-2 py-1 rounded"
+            required
+            minLength={6}
           />
         </div>
 

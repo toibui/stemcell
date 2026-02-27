@@ -5,7 +5,10 @@ import { prisma } from '@/lib/prisma'; // đường dẫn tới Prisma client
 export async function GET() {
   try {
     const customers = await prisma.customer.findMany({
-      include: { births: true } // Customer có relation births
+      include: { 
+        births: true,
+        channelMarketing: true
+      }
     });
     return NextResponse.json(customers);
   } catch (err) {
@@ -19,7 +22,6 @@ export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
 
-    // Chỉ lấy các field hợp lệ của Customer
     const newCustomer = await prisma.customer.create({
       data: {
         fullName: data.fullName,
@@ -29,13 +31,29 @@ export async function POST(req: NextRequest) {
         dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
         edd: data.edd ? new Date(data.edd) : undefined,
         contractSigned: data.contractSigned ?? false,
-        contractSignedAt: data.contractSignedAt ? new Date(data.contractSignedAt) : undefined,
-        status: data.status
+        contractSignedAt: data.contractSignedAt
+          ? new Date(data.contractSignedAt)
+          : undefined,
+        status: data.status,
+
+        // 👇 Gắn ChannelMarketing nếu có
+        ...(data.channelMarketingId && {
+          channelMarketing: {
+            connect: { id: data.channelMarketingId }
+          }
+        })
+      },
+      include: {
+        channelMarketing: true
       }
     });
+
     return NextResponse.json(newCustomer, { status: 201 });
   } catch (err) {
     console.error(err);
-    return NextResponse.json({ error: 'Failed to create customer' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to create customer' },
+      { status: 500 }
+    );
   }
 }

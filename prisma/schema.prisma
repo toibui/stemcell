@@ -22,13 +22,34 @@ enum BirthStatus {
   cancelled
 }
 
-enum SampleStatus {
-  collected
-  processing
-  external_testing
-  qc
-  stored
-  rejected
+model Type{
+  id    String   @id @default(uuid())
+  name  String?
+  contracts Contract[]
+}
+
+model Staff {
+  id        String   @id @default(uuid())
+  fullName  String
+  phone     String?
+  email     String @unique
+
+  role      StaffRole
+  isActive  Boolean @default(true)
+  password String
+
+  createdAt DateTime @default(now())
+  consultings Consulting[]
+  samplesCollected Sample[]
+  processings SampleProcessing[]
+  qualityControls QualityControl[]
+  birthFollowUps BirthFollowUp[]
+}
+
+model ChannelMarketing{
+  id        String   @id @default(uuid())
+  name      String 
+  customers Customer[]
 }
 
 model Customer {
@@ -37,31 +58,40 @@ model Customer {
   phone     String
   email     String?
   address   String?
-
-  dateOfBirth DateTime?
+  consulting Consulting[]
+  channelMarketing ChannelMarketing? @relation(fields: [channelMarketingId], references: [id], onDelete: SetNull)
+  channelMarketingId String?
+  dateOfBirth  DateTime?
   edd          DateTime?
-
-  contractSigned   Boolean   @default(false)
-  contractSignedAt DateTime?
-
-  status    String
+  contract    Contract[]
 
   births    BirthTracking[]
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Staff {
+model Consulting {
   id        String   @id @default(uuid())
-  fullName  String
-  phone     String?
-  email     String?
+  customer  Customer @relation(fields: [customerId], references: [id])
+  customerId String
+  Content   String?
 
-  role      StaffRole
-  isActive  Boolean @default(true)
-
+  staff   Staff @relation(fields:[staffid], references: [id])
+  staffid String
   createdAt DateTime @default(now())
+}
+
+
+model Contract {
+  id        String   @id @default(uuid())
+  customer  Customer @relation(fields: [customerId], references: [id])
+  customerId String
+  no         String? @unique
+  type       Type @relation(fields: [typeId], references: [id])
+  typeId     String
+  dateContract DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model BirthTracking {
@@ -70,8 +100,7 @@ model BirthTracking {
   customerId String
 
   edd               DateTime?
-  actualBirthDate   DateTime?
-  actualBirthTime   DateTime?
+  actualBirthAt DateTime?
 
   hospitalName      String?
   hospitalAddress   String?
@@ -97,8 +126,8 @@ model BirthFollowUp {
   followType String
   plannedDate DateTime?
   contactedAt DateTime?
-
-  staffId String?
+  staff Staff @relation(fields:[staffId], references: [id])
+  staffId String
   note    String?
 }
 
@@ -108,11 +137,10 @@ model Sample {
   birthId  String
 
   babyOrder Int
-  collectedBy String?
+  collectedBy Staff @relation(fields: [staffId], references: [id])
+  staffId String
   collectedAt DateTime?
   condition String?
-
-  status SampleStatus
 
   processing SampleProcessing[]     // 1 Sample có nhiều Processings
   externalTests ExternalTest[]      // 1 Sample có nhiều ExternalTests
@@ -120,14 +148,16 @@ model Sample {
   storage Storage[]                 // 1 Sample có thể được lưu nhiều lần
 
   createdAt DateTime @default(now())
+  @@index([birthId])
 }
 
 model SampleProcessing {
   id        String   @id @default(uuid())
   sample    Sample   @relation(fields: [sampleId], references: [id])
-  sampleId String
+  sampleId  String
 
-  processedBy String?
+  processedBy Staff @relation(fields: [staffId], references: [id])
+  staffId String
   processedAt DateTime?
   note String?
 }
@@ -149,10 +179,18 @@ model QualityControl {
   sample    Sample   @relation(fields: [sampleId], references: [id])
   sampleId String
 
-  qcStaffId String?
+  qcStaff Staff @relation(fields: [staffId], references: [id])
+  staffId String
   checkedAt DateTime?
-  status String
+  result ResultQualityControl[]
   note String?
+}
+
+model ResultQualityControl{
+  id  String   @id @default(uuid())
+  qualityControl QualityControl   @relation(fields: [qcId], references: [id])
+  qcId String
+  status String
 }
 
 model StorageTank {
@@ -160,7 +198,6 @@ model StorageTank {
   tankCode  String   @unique
   description String?
   location String?
-
   storages Storage[]
 }
 

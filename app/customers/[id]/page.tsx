@@ -1,113 +1,254 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useParams } from 'next/navigation';
 
-type Customer = {
+import { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+
+type ChannelMarketing = {
   id: string;
+  name: string;
+};
+
+type CustomerForm = {
   fullName: string;
   phone: string;
   email?: string;
-  status: string;
-  births?: any[];
+  address?: string;
+  dateOfBirth?: string;
+  edd?: string;
+  channelMarketingId?: string;
 };
 
 export default function EditCustomerPage() {
   const router = useRouter();
-  const { id } = useParams(); // Lấy id từ route params
-  const [customer, setCustomer] = useState<Customer | null>(null);
+  const params = useParams();
+  const id = params?.id as string;
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [channels, setChannels] = useState<ChannelMarketing[]>([]);
 
+  const [form, setForm] = useState<CustomerForm>({
+    fullName: '',
+    phone: '',
+    email: '',
+    address: '',
+    dateOfBirth: '',
+    edd: '',
+    channelMarketingId: '',
+  });
+
+  // Load data
   useEffect(() => {
     if (!id) return;
-    fetch(`/api/customers/${id}`)
-      .then(res => res.json())
-      .then(data => {
-        setCustomer(data);
-        setLoading(false);
+
+    const fetchData = async () => {
+      const [customerRes, channelRes] = await Promise.all([
+        fetch(`/api/customers/${id}`),
+        fetch('/api/channel-marketing'),
+      ]);
+
+      const customer = await customerRes.json();
+      const channelData = await channelRes.json();
+
+      setChannels(channelData);
+
+      setForm({
+        fullName: customer.fullName || '',
+        phone: customer.phone || '',
+        email: customer.email || '',
+        address: customer.address || '',
+        dateOfBirth: customer.dateOfBirth
+          ? customer.dateOfBirth.split('T')[0]
+          : '',
+        edd: customer.edd
+          ? customer.edd.split('T')[0]
+          : '',
+        channelMarketingId: customer.channelMarketingId || '',
       });
+
+      setLoading(false);
+    };
+
+    fetchData();
   }, [id]);
 
-  if (loading) return <div>Loading...</div>;
-  if (!customer) return <div>Customer not found</div>;
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    setCustomer(prev => prev ? { ...prev, [name]: value } : null);
+    setForm(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    await fetch(`/api/customers/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(customer),
-    });
-    setSaving(false);
-    router.push('/customers'); // quay lại trang danh sách
+
+    try {
+      const res = await fetch(`/api/customers/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          email: form.email || null,
+          address: form.address || null,
+          dateOfBirth: form.dateOfBirth || null,
+          edd: form.edd || null,
+          channelMarketingId: form.channelMarketingId || null,
+        }),
+      });
+
+      if (!res.ok) throw new Error();
+
+      router.push('/customers');
+    } catch {
+      alert('Có lỗi xảy ra khi cập nhật khách hàng.');
+    } finally {
+      setSaving(false);
+    }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
+        Đang tải dữ liệu...
+      </div>
+    );
+  }
+
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Edit Customer</h1>
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-        <div>
-          <label className="block mb-1">Full Name</label>
-          <input
-            type="text"
-            name="fullName"
-            value={customer.fullName}
-            onChange={handleChange}
-            className="w-full border px-2 py-1 rounded"
-          />
-        </div>
-        <div>
-          <label className="block mb-1">Phone</label>
-          <input
-            type="text"
-            name="phone"
-            value={customer.phone}
-            onChange={handleChange}
-            className="w-full border px-2 py-1 rounded"
-          />
-        </div>
-        <div>
-          <label className="block mb-1">Email</label>
-          <input
-            type="email"
-            name="email"
-            value={customer.email || ''}
-            onChange={handleChange}
-            className="w-full border px-2 py-1 rounded"
-          />
-        </div>
-        <div>
-          <label className="block mb-1">Status</label>
-          <select
-            name="status"
-            value={customer.status}
-            onChange={handleChange}
-            className="w-full border px-2 py-1 rounded"
-          >
-            <option value="Chờ tư vấn">Chờ tư vấn</option>
-            <option value="Đã tư vấn, Khách hàng từ chối">Đã tư vấn, Khách hàng từ chối</option>
-            <option value="Đã tư vấn, chưa ký hợp đồng">Đã tư vấn, chưa ký hợp đồng</option>
-            <option value="Đã ký hợp đồng">Đã ký hợp đồng</option>
-            <option value="Đang theo dõi sinh">Đang theo dõi sinh</option>
-            <option value="Đang xử lý mẫu">Đang xử lý mẫu</option>
-            <option value="Mẫu đã lưu trữ">Mẫu đã lưu trữ</option>
-          </select>
-        </div>
-        <button
-          type="submit"
-          disabled={saving}
-          className="bg-green-500 text-white px-4 py-2 rounded"
-        >
-          {saving ? 'Saving...' : 'Save'}
-        </button>
-      </form>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-2xl mx-auto bg-white shadow rounded-xl p-6">
+        <h1 className="text-2xl font-bold mb-6">
+          Cập nhật khách hàng
+        </h1>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Full Name */}
+          <div>
+            <label className="block mb-1 font-medium">
+              Họ và tên *
+            </label>
+            <input
+              type="text"
+              name="fullName"
+              value={form.fullName}
+              onChange={handleChange}
+              required
+              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label className="block mb-1 font-medium">
+              Số điện thoại *
+            </label>
+            <input
+              type="text"
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              required
+              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block mb-1 font-medium">
+              Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+          </div>
+
+          {/* Address */}
+          <div>
+            <label className="block mb-1 font-medium">
+              Địa chỉ
+            </label>
+            <input
+              type="text"
+              name="address"
+              value={form.address}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+          </div>
+
+          {/* Date of Birth */}
+          <div>
+            <label className="block mb-1 font-medium">
+              Ngày sinh
+            </label>
+            <input
+              type="date"
+              name="dateOfBirth"
+              value={form.dateOfBirth}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+          </div>
+
+          {/* EDD */}
+          <div>
+            <label className="block mb-1 font-medium">
+              Ngày dự sinh (EDD)
+            </label>
+            <input
+              type="date"
+              name="edd"
+              value={form.edd}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+          </div>
+
+          {/* Channel Marketing */}
+          <div>
+            <label className="block mb-1 font-medium">
+              Nguồn marketing
+            </label>
+            <select
+              name="channelMarketingId"
+              value={form.channelMarketingId}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2"
+            >
+              <option value="">-- Chọn nguồn --</option>
+              {channels.map(channel => (
+                <option key={channel.id} value={channel.id}>
+                  {channel.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Buttons */}
+          <div className="pt-4 flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={() => router.push('/customers')}
+              className="px-4 py-2 border rounded-lg"
+            >
+              Huỷ
+            </button>
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg shadow"
+            >
+              {saving ? 'Đang lưu...' : 'Cập nhật'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

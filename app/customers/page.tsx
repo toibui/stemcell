@@ -1,4 +1,5 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
@@ -7,56 +8,123 @@ type Customer = {
   fullName: string;
   phone: string;
   email?: string;
-  status: string;
+  address?: string;
+  dateOfBirth?: string;
+  edd?: string;
   births?: any[];
+  channelMarketing?: {
+    name: string;
+  } | null;
 };
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/customers')
       .then(res => res.json())
-      .then(setCustomers);
+      .then(data => {
+        setCustomers(data);
+        setLoading(false);
+      });
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure?')) return;
+    const confirmDelete = window.confirm('Bạn có chắc muốn xoá khách hàng này?');
+    if (!confirmDelete) return;
+
     await fetch(`/api/customers/${id}`, { method: 'DELETE' });
-    setCustomers(customers.filter(c => c.id !== id));
+    setCustomers(prev => prev.filter(c => c.id !== id));
+  };
+
+  const formatDate = (date?: string) => {
+    if (!date) return '-';
+    return new Date(date).toLocaleDateString('vi-VN');
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Customers</h1>
-      <Link href="/customers/new" className="bg-blue-500 text-white px-4 py-2 rounded">New Customer</Link>
-      <table className="w-full mt-4 border">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Phone</th>
-            <th>Email</th>
-            <th>Status</th>
-            <th>Births</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {customers.map(c => (
-            <tr key={c.id}>
-              <td>{c.fullName}</td>
-              <td>{c.phone}</td>
-              <td>{c.email}</td>
-              <td>{c.status}</td>
-              <td>{c.births?.length || 0}</td>
-              <td>
-                <Link href={`/customers/${c.id}`} className="text-blue-500 mr-2">Edit</Link>
-                <button onClick={() => handleDelete(c.id)} className="text-red-500">Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Danh sách khách hàng</h1>
+        <Link
+          href="/customers/new"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow"
+        >
+          + Thêm khách hàng
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-10 text-gray-500">Đang tải dữ liệu...</div>
+      ) : customers.length === 0 ? (
+        <div className="text-center py-10 text-gray-400">
+          Chưa có khách hàng nào
+        </div>
+      ) : (
+        <div className="bg-white shadow rounded-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+                <tr>
+                  <th className="p-3 text-left">Họ tên</th>
+                  <th className="p-3 text-left">Điện thoại</th>
+                  <th className="p-3 text-left">Email</th>
+                  <th className="p-3 text-left">Ngày sinh</th>
+                  <th className="p-3 text-left">EDD</th>
+                  <th className="p-3 text-left">Nguồn</th>
+                  <th className="p-3 text-center">Số lần sinh</th>
+                  <th className="p-3 text-center">Hành động</th>
+                </tr>
+              </thead>
+              <tbody>
+                {customers.map(c => (
+                  <tr
+                    key={c.id}
+                    className="border-t hover:bg-gray-50 transition"
+                  >
+                    <td className="p-3 font-medium">{c.fullName}</td>
+                    <td className="p-3">{c.phone}</td>
+                    <td className="p-3">{c.email || '-'}</td>
+                    <td className="p-3">{formatDate(c.dateOfBirth)}</td>
+                    <td className="p-3">
+                      {c.edd ? (
+                        <span className="bg-pink-100 text-pink-600 px-2 py-1 rounded-full text-xs">
+                          {formatDate(c.edd)}
+                        </span>
+                      ) : (
+                        '-'
+                      )}
+                    </td>
+                    <td className="p-3">
+                      {c.channelMarketing?.name || '-'}
+                    </td>
+                    <td className="p-3 text-center">
+                      <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs">
+                        {c.births?.length || 0}
+                      </span>
+                    </td>
+                    <td className="p-3 text-center space-x-3">
+                      <Link
+                        href={`/customers/${c.id}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        Sửa
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(c.id)}
+                        className="text-red-500 hover:underline"
+                      >
+                        Xoá
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

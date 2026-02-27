@@ -1,46 +1,71 @@
 'use client';
-import { useState } from 'react';
+
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-type Customer = {
+type ChannelMarketing = {
+  id: string;
+  name: string;
+};
+
+type CustomerForm = {
   fullName: string;
   phone: string;
   email?: string;
-  status: string;
+  address?: string;
+  dateOfBirth?: string;
+  edd?: string;
+  channelMarketingId?: string;
 };
 
 export default function CreateCustomerPage() {
   const router = useRouter();
-  const [customer, setCustomer] = useState<Customer>({
+  const [saving, setSaving] = useState(false);
+  const [channels, setChannels] = useState<ChannelMarketing[]>([]);
+
+  const [form, setForm] = useState<CustomerForm>({
     fullName: '',
     phone: '',
     email: '',
-    status: 'Chờ tư vấn', // default
+    address: '',
+    dateOfBirth: '',
+    edd: '',
+    channelMarketingId: '',
   });
-  const [saving, setSaving] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  useEffect(() => {
+    fetch('/api/channel-marketing')
+      .then(res => res.json())
+      .then(setChannels);
+  }, []);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    setCustomer(prev => ({ ...prev, [name]: value }));
+    setForm(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+
     try {
       const res = await fetch('/api/customers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(customer),
+        body: JSON.stringify({
+          ...form,
+          dateOfBirth: form.dateOfBirth || null,
+          edd: form.edd || null,
+          channelMarketingId: form.channelMarketingId || null,
+        }),
       });
 
-      if (!res.ok) {
-        throw new Error('Failed to create customer');
-      }
+      if (!res.ok) throw new Error();
 
-      router.push('/customers'); // quay lại danh sách sau khi tạo
-    } catch (error) {
-      console.error(error);
+      router.push('/customers');
+    } catch {
       alert('Có lỗi xảy ra khi tạo khách hàng.');
     } finally {
       setSaving(false);
@@ -48,66 +73,139 @@ export default function CreateCustomerPage() {
   };
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Create New Customer</h1>
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-        <div>
-          <label className="block mb-1">Full Name</label>
-          <input
-            type="text"
-            name="fullName"
-            value={customer.fullName}
-            onChange={handleChange}
-            className="w-full border px-2 py-1 rounded"
-            required
-          />
-        </div>
-        <div>
-          <label className="block mb-1">Phone</label>
-          <input
-            type="text"
-            name="phone"
-            value={customer.phone}
-            onChange={handleChange}
-            className="w-full border px-2 py-1 rounded"
-            required
-          />
-        </div>
-        <div>
-          <label className="block mb-1">Email</label>
-          <input
-            type="email"
-            name="email"
-            value={customer.email}
-            onChange={handleChange}
-            className="w-full border px-2 py-1 rounded"
-          />
-        </div>
-        <div>
-          <label className="block mb-1">Status</label>
-          <select
-            name="status"
-            value={customer.status}
-            onChange={handleChange}
-            className="w-full border px-2 py-1 rounded"
-          >
-            <option value="Chờ tư vấn">Chờ tư vấn</option>
-            <option value="Đã tư vấn, Khách hàng từ chối">Đã tư vấn, Khách hàng từ chối</option>
-            <option value="Đã tư vấn, chưa ký hợp đồng">Đã tư vấn, chưa ký hợp đồng</option>
-            <option value="Đã ký hợp đồng">Đã ký hợp đồng</option>
-            <option value="Đang theo dõi sinh">Đang theo dõi sinh</option>
-            <option value="Đang xử lý mẫu">Đang xử lý mẫu</option>
-            <option value="Mẫu đã lưu trữ">Mẫu đã lưu trữ</option>
-          </select>
-        </div>
-        <button
-          type="submit"
-          disabled={saving}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          {saving ? 'Saving...' : 'Create'}
-        </button>
-      </form>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-2xl mx-auto bg-white shadow rounded-xl p-6">
+        <h1 className="text-2xl font-bold mb-6">
+          Thêm khách hàng mới
+        </h1>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Full Name */}
+          <div>
+            <label className="block mb-1 font-medium">
+              Họ và tên *
+            </label>
+            <input
+              type="text"
+              name="fullName"
+              value={form.fullName}
+              onChange={handleChange}
+              required
+              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label className="block mb-1 font-medium">
+              Số điện thoại *
+            </label>
+            <input
+              type="text"
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              required
+              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block mb-1 font-medium">
+              Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Address */}
+          <div>
+            <label className="block mb-1 font-medium">
+              Địa chỉ
+            </label>
+            <input
+              type="text"
+              name="address"
+              value={form.address}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Date of Birth */}
+          <div>
+            <label className="block mb-1 font-medium">
+              Ngày sinh
+            </label>
+            <input
+              type="date"
+              name="dateOfBirth"
+              value={form.dateOfBirth}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+          </div>
+
+          {/* EDD */}
+          <div>
+            <label className="block mb-1 font-medium">
+              Ngày dự sinh (EDD)
+            </label>
+            <input
+              type="date"
+              name="edd"
+              value={form.edd}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+          </div>
+
+          {/* Channel Marketing */}
+          <div>
+            <label className="block mb-1 font-medium">
+              Nguồn marketing
+            </label>
+            <select
+              name="channelMarketingId"
+              value={form.channelMarketingId}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2"
+            >
+              <option value="">-- Chọn nguồn --</option>
+              {channels.map(channel => (
+                <option key={channel.id} value={channel.id}>
+                  {channel.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Button */}
+          <div className="pt-4 flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={() => router.push('/customers')}
+              className="px-4 py-2 border rounded-lg"
+            >
+              Huỷ
+            </button>
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow"
+            >
+              {saving ? 'Đang lưu...' : 'Tạo khách hàng'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

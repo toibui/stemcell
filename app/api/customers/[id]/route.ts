@@ -24,37 +24,57 @@ export async function GET(req: Request, context: any) {
   }
 }
 
-export async function PUT(req: Request, context: any) {
-  const params = await context.params;
-  const { id } = params;
+export async function PUT(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params; // ✅ BẮT BUỘC await
 
-  if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+  if (!id) {
+    return NextResponse.json(
+      { error: 'ID is required' },
+      { status: 400 }
+    );
+  }
 
   try {
-    const data = await req.json(); // dữ liệu gửi từ frontend
+    const data = await req.json();
 
     const updatedCustomer = await prisma.customer.update({
       where: { id },
       data: {
         fullName: data.fullName,
         phone: data.phone,
-        email: data.email,
-        address: data.address,
-        status: data.status,
-        dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
-        edd: data.edd ? new Date(data.edd) : null,
-        contractSigned: data.contractSigned ?? false,
-        contractSignedAt: data.contractSignedAt ? new Date(data.contractSignedAt) : null,
+        email: data.email ?? null,
+        address: data.address ?? null,
+        dateOfBirth: data.dateOfBirth
+          ? new Date(data.dateOfBirth)
+          : null,
+        edd: data.edd
+          ? new Date(data.edd)
+          : null,
+        channelMarketingId: data.channelMarketingId ?? null,
+      },
+      include: {
+        channelMarketing: true,
       },
     });
 
     return NextResponse.json(updatedCustomer);
   } catch (err: any) {
     console.error(err);
+
     if (err.code === 'P2025') {
-      return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Customer not found' },
+        { status: 404 }
+      );
     }
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
