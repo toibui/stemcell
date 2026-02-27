@@ -6,8 +6,9 @@ export async function GET() {
   try {
     const customers = await prisma.customer.findMany({
       include: { 
-        births: true,
         channelMarketing: true,
+        consulting: true,
+        contract: true,
         // Bạn có thể include thêm consulting hoặc contract nếu cần ở frontend
       },
       orderBy: {

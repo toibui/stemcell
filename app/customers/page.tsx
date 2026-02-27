@@ -12,6 +12,8 @@ type Customer = {
   dateOfBirth?: string;
   edd?: string;
   births?: any[];
+  consulting?: any[];
+  contract?: any[];
   channelMarketing?: {
     name: string;
   } | null;
@@ -73,7 +75,9 @@ export default function CustomersPage() {
                   <th className="p-3 text-left">Ngày sinh</th>
                   <th className="p-3 text-left">EDD</th>
                   <th className="p-3 text-left">Nguồn</th>
-                  <th className="p-3 text-center">Số lần sinh</th>
+                  <th className="p-3 text-center">Số lần tư vấn</th>
+                  <th className="p-3 text-center">Ngày sinh thực tế</th>
+                  <th className="p-3 text-center">Số hợp đồng</th>
                   <th className="p-3 text-center">Hành động</th>
                 </tr>
               </thead>
@@ -101,7 +105,26 @@ export default function CustomersPage() {
                     </td>
                     <td className="p-3 text-center">
                       <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs">
-                        {c.births?.length || 0}
+                        {c.consulting?.length || 0}
+                      </span>
+                    </td>
+                    <td className="p-3 text-center">
+                      <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs">
+                        {c.births && c.births.length > 0
+                          ? new Date(
+                              // Lấy phần tử mới nhất (mới nhất theo thứ tự trong mảng)
+                              c.births[c.births.length - 1].actualBirthAt
+                            ).toLocaleDateString('vi-VN')
+                          : '-'}
+                      </span>
+                    </td>
+                    <td className="p-3 text-center">
+                      <span className="bg-green-100 text-green-600 px-2 py-1 rounded-full text-xs">
+                        {c.contract && c.contract.length > 0
+                          ? `${c.contract[c.contract.length - 1].no} (${new Date(
+                              c.contract[c.contract.length - 1].dateContract
+                            ).toLocaleDateString('vi-VN')})`
+                          : '-'}
                       </span>
                     </td>
                     <td className="p-3 text-center space-x-3">

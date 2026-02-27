@@ -3,22 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 
-type CustomerOption = {
-  id: string;
-  fullName: string;
-  phone: string;
-};
-
 type BirthTrackingForm = {
   id: string;
-  customerId: string;
-  edd?: string;
-  actualBirthDate?: string;
-  actualBirthTime?: string;
+  contractId?: string;
+  edd?: string; // ISO date string
+  actualBirthAt?: string;
   hospitalName?: string;
   hospitalAddress?: string;
   birthType?: string;
-  babiesCount: number;
+  babiesCount?: number;
   status: string;
   note?: string;
 };
@@ -28,213 +21,183 @@ export default function EditBirthTrackingPage() {
   const params = useParams();
   const id = params?.id as string;
 
-  const [birth, setBirth] = useState<BirthTrackingForm | null>(null);
-  const [customers, setCustomers] = useState<CustomerOption[]>([]);
+  const [birthTracking, setBirthTracking] = useState<BirthTrackingForm | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!id) return;
 
-    Promise.all([
-      fetch(`/api/births/${id}`).then(res => res.json()),
-      fetch('/api/customers').then(res => res.json())
-    ]).then(([birthData, customersData]) => {
-
-      let datePart = '';
-      let timePart = '';
-
-      if (birthData.actualBirthAt) {
-        const dt = new Date(birthData.actualBirthAt);
-        datePart = dt.toISOString().split('T')[0];
-        timePart = dt.toISOString().substring(11, 16);
+    const fetchData = async () => {
+      try {
+        const res = await fetch(`/api/births/${id}`);
+        if (!res.ok) throw new Error("BirthTracking not found");
+        const data = await res.json();
+        // Convert DateTimes to ISO strings for input
+        setBirthTracking({
+          ...data,
+          edd: data.edd ? new Date(data.edd).toISOString().slice(0, 10) : undefined,
+          actualBirthAt: data.actualBirthAt ? new Date(data.actualBirthAt).toISOString().slice(0, 10) : undefined
+        });
+      } catch (err) {
+        console.error(err);
+        alert("Không tìm thấy dữ liệu.");
+        router.push('/birthtracking');
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setBirth({
-        ...birthData,
-        edd: birthData.edd?.split('T')[0] ?? '',
-        actualBirthDate: datePart,
-        actualBirthTime: timePart
-      });
+    fetchData();
+  }, [id, router]);
 
-      setCustomers(customersData);
-      setLoading(false);
-    });
-  }, [id]);
-
-  if (loading) return <div>Loading...</div>;
-  if (!birth) return <div>BirthTracking not found</div>;
+  if (loading) return <div className="p-4">Loading...</div>;
+  if (!birthTracking) return null;
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setBirth(prev => (prev ? { ...prev, [name]: value } : null));
+    setBirthTracking(prev => prev ? { ...prev, [name]: value } : null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
-    // ✅ Gộp date + time thành actualBirthAt
-    let actualBirthAt: string | null = null;
+    try {
+      const res = await fetch(`/api/births/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(birthTracking)
+      });
 
-    if (birth.actualBirthDate) {
-      actualBirthAt = birth.actualBirthTime
-        ? new Date(`${birth.actualBirthDate}T${birth.actualBirthTime}`).toISOString()
-        : new Date(birth.actualBirthDate).toISOString();
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Update failed");
+      }
+
+      router.push('/birthtracking');
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || 'Có lỗi xảy ra khi cập nhật dữ liệu sinh.');
+    } finally {
+      setSaving(false);
     }
-
-    await fetch(`/api/births/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        customerId: birth.customerId,
-        edd: birth.edd || null,
-        actualBirthAt,
-        hospitalName: birth.hospitalName,
-        hospitalAddress: birth.hospitalAddress,
-        birthType: birth.birthType,
-        babiesCount: Number(birth.babiesCount),
-        status: birth.status,
-        note: birth.note
-      })
-    });
-
-    setSaving(false);
-    router.push('/birthtracking');
   };
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Edit Birth Tracking</h1>
+      <h1 className="text-2xl font-bold mb-4">
+        Edit Birth Tracking
+      </h1>
 
       <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
 
+        {/* Hospital Name */}
         <div>
-          <label className="block mb-1">Customer</label>
-          <select
-            name="customerId"
-            value={birth.customerId}
+          <label className="block mb-1">Hospital Name</label>
+          <input
+            name="hospitalName"
+            value={birthTracking.hospitalName || ''}
             onChange={handleChange}
             className="w-full border px-2 py-1 rounded"
-          >
-            {customers.map(c => (
-              <option key={c.id} value={c.id}>
-                {c.fullName} ({c.phone})
-              </option>
-            ))}
-          </select>
+            placeholder="Hospital Name"
+          />
         </div>
 
+        {/* Hospital Address */}
         <div>
-          <label className="block mb-1">EDD</label>
+          <label className="block mb-1">Hospital Address</label>
+          <input
+            name="hospitalAddress"
+            value={birthTracking.hospitalAddress || ''}
+            onChange={handleChange}
+            className="w-full border px-2 py-1 rounded"
+            placeholder="Hospital Address"
+          />
+        </div>
+
+        {/* EDD */}
+        <div>
+          <label className="block mb-1">Estimated Delivery Date (EDD)</label>
           <input
             type="date"
             name="edd"
-            value={birth.edd || ''}
+            value={birthTracking.edd || ''}
             onChange={handleChange}
             className="w-full border px-2 py-1 rounded"
           />
         </div>
 
+        {/* Actual Birth */}
         <div>
           <label className="block mb-1">Actual Birth Date</label>
           <input
             type="date"
-            name="actualBirthDate"
-            value={birth.actualBirthDate || ''}
+            name="actualBirthAt"
+            value={birthTracking.actualBirthAt || ''}
             onChange={handleChange}
             className="w-full border px-2 py-1 rounded"
           />
         </div>
 
-        <div>
-          <label className="block mb-1">Actual Birth Time</label>
-          <input
-            type="time"
-            name="actualBirthTime"
-            value={birth.actualBirthTime || ''}
-            onChange={handleChange}
-            className="w-full border px-2 py-1 rounded"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1">Hospital Name</label>
-          <input
-            type="text"
-            name="hospitalName"
-            value={birth.hospitalName || ''}
-            onChange={handleChange}
-            className="w-full border px-2 py-1 rounded"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1">Hospital Address</label>
-          <input
-            type="text"
-            name="hospitalAddress"
-            value={birth.hospitalAddress || ''}
-            onChange={handleChange}
-            className="w-full border px-2 py-1 rounded"
-          />
-        </div>
-
+        {/* Birth Type */}
         <div>
           <label className="block mb-1">Birth Type</label>
           <input
-            type="text"
             name="birthType"
-            value={birth.birthType || ''}
+            value={birthTracking.birthType || ''}
             onChange={handleChange}
             className="w-full border px-2 py-1 rounded"
+            placeholder="Birth Type"
           />
         </div>
 
+        {/* Babies Count */}
         <div>
           <label className="block mb-1">Babies Count</label>
           <input
             type="number"
-            min={1}
             name="babiesCount"
-            value={birth.babiesCount}
+            value={birthTracking.babiesCount || 1}
+            min={1}
             onChange={handleChange}
             className="w-full border px-2 py-1 rounded"
           />
         </div>
 
+        {/* Status */}
         <div>
           <label className="block mb-1">Status</label>
           <select
             name="status"
-            value={birth.status}
+            value={birthTracking.status}
             onChange={handleChange}
             className="w-full border px-2 py-1 rounded"
           >
-            <option value="planned">Planned</option>
-            <option value="contacted">Contacted</option>
-            <option value="delivered">Delivered</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="PLANNED">Planned</option>
+            <option value="ONGOING">Ongoing</option>
+            <option value="COMPLETED">Completed</option>
           </select>
         </div>
 
+        {/* Note */}
         <div>
           <label className="block mb-1">Note</label>
           <textarea
             name="note"
-            value={birth.note || ''}
+            value={birthTracking.note || ''}
             onChange={handleChange}
+            rows={4}
             className="w-full border px-2 py-1 rounded"
-            rows={3}
           />
         </div>
 
         <button
           type="submit"
           disabled={saving}
-          className="bg-green-500 text-white px-4 py-2 rounded"
+          className="bg-green-600 text-white px-4 py-2 rounded"
         >
           {saving ? 'Saving...' : 'Save'}
         </button>

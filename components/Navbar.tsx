@@ -39,6 +39,12 @@ export default function Navbar() {
               <NavItem href="/birthtracking" pathname={pathname}>
                 Birth Tracking
               </NavItem>
+              <NavItem href="/contracts" pathname={pathname}>
+                Contracts
+              </NavItem>
+              <NavItem href="/consultings" pathname={pathname}>
+                Consultings
+              </NavItem>
               <NavItem href="/channel-marketing" pathname={pathname}>
                 Channel-marketing
               </NavItem>

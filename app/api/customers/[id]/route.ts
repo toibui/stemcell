@@ -2,20 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(req: Request, context: any) {
-  // context.params là Promise, phải unwrap
   const params = await context.params;
   const { id } = params;
 
-  if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+  if (!id) {
+    return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+  }
 
   try {
     const customer = await prisma.customer.findUnique({
       where: { id },
-      include: { births: true },
+      include: {
+        consulting: true,
+        contract: true,
+        channelMarketing: true,
+      },
     });
 
-    if (!customer)
+    if (!customer) {
       return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
+    }
 
     return NextResponse.json(customer);
   } catch (err) {

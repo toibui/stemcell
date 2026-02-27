@@ -67,7 +67,6 @@ model Customer {
   edd          DateTime?
   contract    Contract[]
 
-  births    BirthTracking[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -85,39 +84,48 @@ model Consulting {
 
 
 model Contract {
-  id        String   @id @default(uuid())
-  customer  Customer @relation(fields: [customerId], references: [id])
-  customerId String
-  no         String? @unique
-  type       Type @relation(fields: [typeId], references: [id])
-  typeId     String
-  dateContract DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(uuid())
+
+  customer      Customer @relation(fields: [customerId], references: [id])
+  customerId    String
+
+  no            String?  @unique
+
+  type          Type     @relation(fields: [typeId], references: [id])
+  typeId        String
+
+  // 👇 THÊM DÒNG NÀY
+  birthTracking BirthTracking?
+
+  dateContract  DateTime @default(now())
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model BirthTracking {
-  id        String   @id @default(uuid())
-  customer  Customer @relation(fields: [customerId], references: [id])
-  customerId String
+  id            String   @id @default(uuid())
 
-  edd               DateTime?
+  contract      Contract? @relation(fields: [contractId], references: [id])
+  contractId    String?   @unique
+
+  edd           DateTime?
   actualBirthAt DateTime?
 
-  hospitalName      String?
-  hospitalAddress   String?
+  hospitalName    String?
+  hospitalAddress String?
 
-  birthType         String?
-  babiesCount       Int      @default(1)
+  birthType     String?
+  babiesCount   Int      @default(1)
 
-  status            BirthStatus
-  note              String?
+  status        BirthStatus
+  note          String?
 
-  samples           Sample[]
-  followUps         BirthFollowUp[]
+  samples       Sample[]
+  followUps     BirthFollowUp[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model BirthFollowUp {
