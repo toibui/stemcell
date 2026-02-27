@@ -1,18 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma'; // đường dẫn tới Prisma client
+import { prisma } from '@/lib/prisma';
 
-// GET all customers (kèm BirthTracking)
+// GET all customers (kèm BirthTracking và ChannelMarketing)
 export async function GET() {
   try {
     const customers = await prisma.customer.findMany({
       include: { 
         births: true,
-        channelMarketing: true
+        channelMarketing: true,
+        // Bạn có thể include thêm consulting hoặc contract nếu cần ở frontend
+      },
+      orderBy: {
+        createdAt: 'desc' // Sắp xếp mới nhất lên đầu
       }
     });
     return NextResponse.json(customers);
   } catch (err) {
-    console.error(err);
+    console.error('Error fetching customers:', err);
     return NextResponse.json({ error: 'Failed to fetch customers' }, { status: 500 });
   }
 }
@@ -26,22 +30,14 @@ export async function POST(req: NextRequest) {
       data: {
         fullName: data.fullName,
         phone: data.phone,
-        email: data.email,
-        address: data.address,
-        dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
-        edd: data.edd ? new Date(data.edd) : undefined,
-        contractSigned: data.contractSigned ?? false,
-        contractSignedAt: data.contractSignedAt
-          ? new Date(data.contractSignedAt)
-          : undefined,
-        status: data.status,
-
-        // 👇 Gắn ChannelMarketing nếu có
-        ...(data.channelMarketingId && {
-          channelMarketing: {
-            connect: { id: data.channelMarketingId }
-          }
-        })
+        email: data.email || null,
+        address: data.address || null,
+        dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
+        edd: data.edd ? new Date(data.edd) : null,
+        
+        // Gắn ChannelMarketing theo ID nếu có
+        // Lưu ý: Model của bạn dùng channelMarketingId làm field trung gian
+        channelMarketingId: data.channelMarketingId || null,
       },
       include: {
         channelMarketing: true
@@ -50,9 +46,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(newCustomer, { status: 201 });
   } catch (err) {
-    console.error(err);
+    console.error('Error creating customer:', err);
+    
+    // Trình bày lỗi chi tiết hơn để dễ debug
     return NextResponse.json(
-      { error: 'Failed to create customer' },
+      { error: 'Failed to create customer', details: err instanceof Error ? err.message : 'Unknown error' },
       { status: 500 }
     );
   }

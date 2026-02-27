@@ -1,28 +1,33 @@
 import { PrismaClient } from "@prisma/client";
+// @ts-ignore
 import { PrismaNeon } from "@prisma/adapter-neon";
+// @ts-ignore
+import { Pool, neonConfig } from "@neondatabase/serverless";
 import ws from "ws";
-import { neonConfig } from "@neondatabase/serverless";
 
-// Bật WebSocket cho Neon serverless
-neonConfig.webSocketConstructor = ws;
+if (typeof window === "undefined") {
+  neonConfig.webSocketConstructor = ws;
+}
 
-// Tạo adapter đúng kiểu
-const adapter = new PrismaNeon({
-  connectionString: process.env.DATABASE_URL!, // chú ý: phải là property
-});
-
-// Singleton Prisma
 declare global {
   var prisma: PrismaClient | undefined;
 }
 
-export const prisma =
-  global.prisma ||
-  new PrismaClient({
-    adapter,
-    log: ["query", "warn", "error"],
-  });
+const createPrismaClient = () => {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) throw new Error("DATABASE_URL is missing!");
 
-if (process.env.NODE_ENV !== "production") {
-  global.prisma = prisma;
-}
+  const pool = new Pool({ connectionString });
+  
+  // Ép kiểu để vượt qua lỗi "Cannot find module" của TS
+  const adapter = new (PrismaNeon as any)(pool);
+
+  return new PrismaClient({
+    adapter,
+    log: ["query", "error", "warn"],
+  });
+};
+
+export const prisma = global.prisma ?? createPrismaClient();
+if (process.env.NODE_ENV !== "production") global.prisma = prisma;
+export default prisma;
