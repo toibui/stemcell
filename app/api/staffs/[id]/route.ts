@@ -13,6 +13,7 @@ const StaffRoles = [
   'storage'
 ] as const;
 
+// 🔹 Kiểu dữ liệu cho role
 type StaffRoleType = (typeof StaffRoles)[number];
 
 // GET single staff by ID
