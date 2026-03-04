@@ -6,7 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 type BirthTrackingForm = {
   id: string;
   contractId?: string;
-  edd?: string; // ISO date string
+  edd?: string;
   actualBirthAt?: string;
   hospitalName?: string;
   hospitalAddress?: string;
@@ -25,6 +25,9 @@ export default function EditBirthTrackingPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // ===============================
+  // FETCH DATA
+  // ===============================
   useEffect(() => {
     if (!id) return;
 
@@ -32,12 +35,17 @@ export default function EditBirthTrackingPage() {
       try {
         const res = await fetch(`/api/births/${id}`);
         if (!res.ok) throw new Error("BirthTracking not found");
+
         const data = await res.json();
-        // Convert DateTimes to ISO strings for input
+
         setBirthTracking({
           ...data,
-          edd: data.edd ? new Date(data.edd).toISOString().slice(0, 10) : undefined,
-          actualBirthAt: data.actualBirthAt ? new Date(data.actualBirthAt).toISOString().slice(0, 10) : undefined
+          edd: data.edd
+            ? new Date(data.edd).toISOString().slice(0, 10)
+            : undefined,
+          actualBirthAt: data.actualBirthAt
+            ? new Date(data.actualBirthAt).toISOString().slice(0, 10)
+            : undefined
         });
       } catch (err) {
         console.error(err);
@@ -54,22 +62,53 @@ export default function EditBirthTrackingPage() {
   if (loading) return <div className="p-4">Loading...</div>;
   if (!birthTracking) return null;
 
+  // ===============================
+  // HANDLE CHANGE
+  // ===============================
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setBirthTracking(prev => prev ? { ...prev, [name]: value } : null);
+
+    setBirthTracking(prev => {
+      if (!prev) return null;
+
+      return {
+        ...prev,
+        [name]: name === "babiesCount"
+          ? Number(value)
+          : value
+      };
+    });
   };
 
+  // ===============================
+  // HANDLE SUBMIT
+  // ===============================
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
+    if (!birthTracking) return;
+
     try {
+      const payload = {
+        ...birthTracking,
+        edd: birthTracking.edd
+          ? new Date(birthTracking.edd)
+          : null,
+        actualBirthAt: birthTracking.actualBirthAt
+          ? new Date(birthTracking.actualBirthAt)
+          : null,
+        babiesCount: birthTracking.babiesCount
+          ? Number(birthTracking.babiesCount)
+          : 1
+      };
+
       const res = await fetch(`/api/births/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(birthTracking)
+        body: JSON.stringify(payload)
       });
 
       if (!res.ok) {
@@ -94,7 +133,6 @@ export default function EditBirthTrackingPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
 
-        {/* Hospital Name */}
         <div>
           <label className="block mb-1">Hospital Name</label>
           <input
@@ -102,11 +140,9 @@ export default function EditBirthTrackingPage() {
             value={birthTracking.hospitalName || ''}
             onChange={handleChange}
             className="w-full border px-2 py-1 rounded"
-            placeholder="Hospital Name"
           />
         </div>
 
-        {/* Hospital Address */}
         <div>
           <label className="block mb-1">Hospital Address</label>
           <input
@@ -114,11 +150,9 @@ export default function EditBirthTrackingPage() {
             value={birthTracking.hospitalAddress || ''}
             onChange={handleChange}
             className="w-full border px-2 py-1 rounded"
-            placeholder="Hospital Address"
           />
         </div>
 
-        {/* EDD */}
         <div>
           <label className="block mb-1">Estimated Delivery Date (EDD)</label>
           <input
@@ -130,7 +164,6 @@ export default function EditBirthTrackingPage() {
           />
         </div>
 
-        {/* Actual Birth */}
         <div>
           <label className="block mb-1">Actual Birth Date</label>
           <input
@@ -142,7 +175,6 @@ export default function EditBirthTrackingPage() {
           />
         </div>
 
-        {/* Birth Type */}
         <div>
           <label className="block mb-1">Birth Type</label>
           <input
@@ -150,24 +182,21 @@ export default function EditBirthTrackingPage() {
             value={birthTracking.birthType || ''}
             onChange={handleChange}
             className="w-full border px-2 py-1 rounded"
-            placeholder="Birth Type"
           />
         </div>
 
-        {/* Babies Count */}
         <div>
           <label className="block mb-1">Babies Count</label>
           <input
             type="number"
             name="babiesCount"
-            value={birthTracking.babiesCount || 1}
             min={1}
+            value={birthTracking.babiesCount || 1}
             onChange={handleChange}
             className="w-full border px-2 py-1 rounded"
           />
         </div>
 
-        {/* Status */}
         <div>
           <label className="block mb-1">Status</label>
           <select
@@ -182,14 +211,13 @@ export default function EditBirthTrackingPage() {
           </select>
         </div>
 
-        {/* Note */}
         <div>
           <label className="block mb-1">Note</label>
           <textarea
             name="note"
+            rows={4}
             value={birthTracking.note || ''}
             onChange={handleChange}
-            rows={4}
             className="w-full border px-2 py-1 rounded"
           />
         </div>

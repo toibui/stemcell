@@ -85,20 +85,14 @@ model Consulting {
 
 model Contract {
   id            String   @id @default(uuid())
-
   customer      Customer @relation(fields: [customerId], references: [id])
   customerId    String
-
   no            String?  @unique
-
   type          Type     @relation(fields: [typeId], references: [id])
   typeId        String
-
   // 👇 THÊM DÒNG NÀY
   birthTracking BirthTracking?
-
   dateContract  DateTime @default(now())
-
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

@@ -59,12 +59,9 @@ export async function PUT(
     const data = await req.json();
 
     // ✅ combine date + time thành actualBirthAt
-    let actualBirthAt: Date | null = null;
-    if (data.actualBirthDate) {
-      actualBirthAt = data.actualBirthTime
-        ? new Date(`${data.actualBirthDate}T${data.actualBirthTime}`)
-        : new Date(data.actualBirthDate);
-    }
+    const actualBirthAt = data.actualBirthAt
+    ? new Date(data.actualBirthAt)
+    : null;
 
     const updatedBirthTracking = await prisma.birthTracking.update({
       where: { id },
