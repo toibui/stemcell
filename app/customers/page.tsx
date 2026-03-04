@@ -110,11 +110,8 @@ export default function CustomersPage() {
                     </td>
                     <td className="p-3 text-center">
                       <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs">
-                        {c.births && c.births.length > 0
-                          ? new Date(
-                              // Lấy phần tử mới nhất (mới nhất theo thứ tự trong mảng)
-                              c.births[c.births.length - 1].actualBirthAt
-                            ).toLocaleDateString('vi-VN')
+                        {c.contract?.[0]?.birthTracking?.actualBirthAt
+                          ? new Date(c.contract[0].birthTracking.actualBirthAt).toLocaleDateString('vi-VN')
                           : '-'}
                       </span>
                     </td>

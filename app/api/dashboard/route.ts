@@ -96,7 +96,7 @@ export async function GET(req: NextRequest) {
 
     const conversionRate =
       totalUniqueConsultedCustomers > 0
-        ? (totalContracts / totalUniqueConsultedCustomers) * 100
+        ? (totalConsultings / totalUniqueConsultedCustomers) 
         : 0
 
     const sampleRate =

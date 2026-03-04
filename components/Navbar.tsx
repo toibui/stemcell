@@ -4,6 +4,12 @@ import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
+import { 
+  Users, Baby, FileText, MessageCircle, BarChart3, 
+  Settings, LogOut, User, Menu, X 
+} from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { useSidebar } from "@/context/SidebarContext"
 
 const roleLabel: Record<string, string> = {
   admin: "Quản trị viên",
@@ -11,131 +17,146 @@ const roleLabel: Record<string, string> = {
   lab: "Kỹ thuật viên",
 }
 
-export default function Navbar() {
+export default function Sidebar() {
   const { data: session, status } = useSession()
   const pathname = usePathname()
-  const [open, setOpen] = useState(false)
+  const { collapsed, setCollapsed } = useSidebar()
+  const [openUserMenu, setOpenUserMenu] = useState(false)
 
-  if (status === "loading") return null
+  if (status === "loading" || !session) return null
 
   return (
-    <nav className="bg-white border-b shadow-sm">
-      <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-
-        {/* LEFT */}
-        <div className="flex items-center gap-10">
-          <Link
-            href="/"
-            className="text-xl font-bold bg-gradient-to-r from-blue-700 to-cyan-500 bg-clip-text text-transparent"
+    <aside 
+      className={`fixed left-0 top-0 h-screen bg-white border-r shadow-sm transition-all duration-300 z-[100] flex flex-col ${
+        collapsed ? "w-20" : "w-64"
+      }`}
+    >
+      {/* LOGO SECTION */}
+      <div className="p-6 flex items-center justify-between min-h-[80px]">
+        {!collapsed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex-1"
           >
-            StemCell System
-          </Link>
+            <Link href="/" className="text-xl font-black bg-gradient-to-r from-blue-700 to-cyan-500 bg-clip-text text-transparent truncate font-sans tracking-tighter">
+              StemCell
+            </Link>
+          </motion.div>
+        )}
+        <button 
+          onClick={() => setCollapsed(!collapsed)}
+          className={`p-2 rounded-xl hover:bg-slate-100 text-slate-500 transition-colors ${collapsed ? "mx-auto" : ""}`}
+        >
+          {collapsed ? <Menu size={20} /> : <X size={20} />}
+        </button>
+      </div>
 
-          {session && (
-            <div className="flex items-center gap-6">
-              <NavItem href="/customers" pathname={pathname}>
-                Customers
-              </NavItem>
-              <NavItem href="/birthtracking" pathname={pathname}>
-                Birth Tracking
-              </NavItem>
-              <NavItem href="/contracts" pathname={pathname}>
-                Contracts
-              </NavItem>
-              <NavItem href="/consultings" pathname={pathname}>
-                Consultings
-              </NavItem>
-              <NavItem href="/channel-marketing" pathname={pathname}>
-                Channel-marketing
-              </NavItem>
+      {/* MENU ITEMS */}
+      <div className="flex-1 px-3 space-y-4 overflow-y-auto scrollbar-hide py-4">
+        <NavGroup label="Quản lý khách" collapsed={collapsed}>
+          <NavItem href="/customers" icon={<Users size={20} />} label="Khách hàng" pathname={pathname} collapsed={collapsed} />
+          <NavItem href="/consultings" icon={<MessageCircle size={20} />} label="Tư vấn" pathname={pathname} collapsed={collapsed} />
+          <NavItem href="/dashboards" icon={<MessageCircle size={20} />} label="Dashboard" pathname={pathname} collapsed={collapsed} />
 
-              {session.user.role === "admin" && (
-                <NavItem href="/staffs" pathname={pathname}>
-                  Staffs
-                </NavItem>
-              )}
-              
+        </NavGroup>
+
+        <NavGroup label="Hợp đồng & Sinh" collapsed={collapsed}>
+          <NavItem href="/birthtracking" icon={<Baby size={20} />} label="Theo dõi sinh" pathname={pathname} collapsed={collapsed} />
+          <NavItem href="/contracts" icon={<FileText size={20} />} label="Hợp đồng" pathname={pathname} collapsed={collapsed} />
+        </NavGroup>
+
+        <NavGroup label="Cấu hình hệ thống" collapsed={collapsed}>
+          {session.user.role === "admin" && (
+            <NavItem href="/staffs" icon={<User size={20} />} label="Nhân sự" pathname={pathname} collapsed={collapsed} />
+            
+          )}
+          
+          <NavItem href="/channel-marketing" icon={<BarChart3 size={20} />} label="Marketing" pathname={pathname} collapsed={collapsed} />
+        </NavGroup>
+      </div>
+
+      {/* USER SECTION */}
+      <div className="p-4 border-t relative bg-slate-50/50">
+        <button
+          onClick={() => setOpenUserMenu(!openUserMenu)}
+          className={`w-full flex items-center gap-3 p-2 rounded-2xl hover:bg-white hover:shadow-sm transition-all duration-300 ${collapsed ? "justify-center" : ""}`}
+        >
+          <div className="h-9 w-9 min-w-[36px] rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shadow-blue-100 shadow-lg">
+            {session.user?.name?.charAt(0)}
+          </div>
+          {!collapsed && (
+            <div className="text-left flex-1 truncate">
+              <p className="text-sm font-bold text-slate-700 truncate">{session.user?.name}</p>
+              <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{roleLabel[session.user.role]}</p>
             </div>
           )}
-        </div>
+        </button>
 
-        {/* RIGHT */}
-        <div className="flex items-center gap-4 relative">
-          {session ? (
-            <>
-              <button
-                onClick={() => setOpen(!open)}
-                className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100 transition"
-              >
-                <div className="h-9 w-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold">
-                  {session.user?.name?.charAt(0)}
-                </div>
-
-                <div className="text-left hidden sm:block">
-                  <p className="text-sm font-medium">
-                    {session.user?.name}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {roleLabel[session.user.role] || session.user.role}
-                  </p>
-                </div>
-              </button>
-
-              {/* Dropdown */}
-              {open && (
-                <div className="absolute right-0 top-14 w-52 bg-white border rounded-2xl shadow-xl p-2 z-50">
-                  <Link
-                    href="/profile"
-                    className="block px-4 py-2 text-sm rounded-lg hover:bg-gray-100"
-                    onClick={() => setOpen(false)}
-                  >
-                    Thông tin cá nhân
-                  </Link>
-
-                  <button
-                    onClick={() => signOut({ callbackUrl: "/auth/login" })}
-                    className="w-full text-left px-4 py-2 text-sm rounded-lg hover:bg-red-50 text-red-600"
-                  >
-                    Đăng xuất
-                  </button>
-                </div>
-              )}
-            </>
-          ) : (
-            <Link
-              href="/auth/login"
-              className="px-5 py-2 bg-blue-600 text-white rounded-xl shadow hover:bg-blue-700 transition"
+        <AnimatePresence>
+          {openUserMenu && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              className={`absolute bottom-full left-4 right-4 mb-4 bg-white border border-slate-100 rounded-[1.5rem] shadow-2xl p-2 z-[110]`}
             >
-              Đăng nhập
-            </Link>
+              <Link href="/profile" className="flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl hover:bg-slate-50 text-slate-600 transition-colors" onClick={() => setOpenUserMenu(false)}>
+                <User size={16} className="text-slate-400" /> Hồ sơ cá nhân
+              </Link>
+              <div className="h-px bg-slate-50 my-1 mx-2" />
+              <button onClick={() => signOut({ callbackUrl: "/auth/login" })} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl hover:bg-red-50 text-red-600 transition-colors">
+                <LogOut size={16} /> Thoát hệ thống
+              </button>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
       </div>
-    </nav>
+    </aside>
   )
 }
 
-function NavItem({
-  href,
-  pathname,
-  children,
-}: {
-  href: string
-  pathname: string
-  children: React.ReactNode
-}) {
-  const active = pathname.startsWith(href)
-
+function NavGroup({ label, children, collapsed }: { label: string, children: React.ReactNode, collapsed: boolean }) {
   return (
-    <Link
-      href={href}
-      className={`text-sm font-medium transition ${
-        active
-          ? "text-blue-600 border-b-2 border-blue-600 pb-1"
-          : "text-gray-600 hover:text-blue-600"
-      }`}
-    >
-      {children}
+    <div className="mb-6">
+      {!collapsed && (
+        <motion.p 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }}
+          className="px-4 mb-3 text-[10px] font-black text-slate-400 uppercase tracking-[0.25em]"
+        >
+          {label}
+        </motion.p>
+      )}
+      <div className="space-y-1">{children}</div>
+    </div>
+  )
+}
+
+function NavItem({ href, icon, label, pathname, collapsed }: { href: string, icon: React.ReactNode, label: string, pathname: string, collapsed: boolean }) {
+  const active = pathname === href || pathname.startsWith(`${href}/`)
+  
+  return (
+    <Link href={href} className={`group flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 relative ${
+      active 
+        ? "bg-blue-600 text-white shadow-lg shadow-blue-100" 
+        : "text-slate-500 hover:bg-slate-50 hover:text-blue-600"
+    }`}>
+      <div className={`${active ? "text-white" : "text-slate-400 group-hover:text-blue-600"} transition-colors`}>
+        {icon}
+      </div>
+      {!collapsed && (
+        <motion.span 
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="text-sm font-bold tracking-tight"
+        >
+          {label}
+        </motion.span>
+      )}
+      {active && collapsed && (
+        <div className="absolute right-0 w-1 h-6 bg-white rounded-l-full" />
+      )}
     </Link>
   )
 }

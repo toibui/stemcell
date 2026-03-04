@@ -1,18 +1,19 @@
 import "../styles/globals.css"
-import Navbar from "@/components/Navbar"
 import Providers from "@/components/Providers"
+import { SidebarProvider } from "@/context/SidebarContext"
+import LayoutContent from "../components/LayoutContent" // Chúng ta sẽ tạo file này
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi">
-      <body>
+      <body className="bg-slate-50 font-sans text-slate-900 antialiased">
         <Providers>
-          <Navbar />
-          {children}
+          <SidebarProvider>
+            {/* LayoutContent là một Client Component, 
+               nó sẽ bọc Sidebar và Main để xử lý logic collapsed 
+            */}
+            <LayoutContent>{children}</LayoutContent>
+          </SidebarProvider>
         </Providers>
       </body>
     </html>

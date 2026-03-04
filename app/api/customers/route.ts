@@ -8,8 +8,12 @@ export async function GET() {
       include: { 
         channelMarketing: true,
         consulting: true,
-        contract: true,
+        contract: {
+          include: {
+            birthTracking: true // 👈 THÊM DÒNG NÀY
+          }
         // Bạn có thể include thêm consulting hoặc contract nếu cần ở frontend
+        },
       },
       orderBy: {
         createdAt: 'desc' // Sắp xếp mới nhất lên đầu
