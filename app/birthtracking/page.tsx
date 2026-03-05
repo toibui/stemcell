@@ -67,8 +67,8 @@ export default function BirthTrackingPage() {
             <tr>
               <th className="p-3 text-left">Customer</th>
               <th className="p-3 text-left">Phone</th>
-              <th className="p-3 text-left">EDD</th>
-              <th className="p-3 text-left">Actual Birth</th>
+              <th className="p-3 text-left">Ngày dự sinh</th>
+              <th className="p-3 text-left">Ngày sinh thực tế</th>
               <th className="p-3 text-left">Hospital</th>
               <th className="p-3 text-center">Babies</th>
               <th className="p-3 text-left">Status</th>

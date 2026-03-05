@@ -205,9 +205,10 @@ export default function EditBirthTrackingPage() {
             onChange={handleChange}
             className="w-full border px-2 py-1 rounded"
           >
-            <option value="PLANNED">Planned</option>
-            <option value="ONGOING">Ongoing</option>
-            <option value="COMPLETED">Completed</option>
+            <option value="planned">Planned</option>
+            <option value="contacted">Contacted</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
           </select>
         </div>
 
