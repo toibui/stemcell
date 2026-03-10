@@ -5,13 +5,20 @@ import { useRouter } from 'next/navigation';
 import { Combobox } from "@headlessui/react";
 
 type CustomerOption = { id: string; fullName: string; phone: string };
-type TypeOption = { id: string; name: string };
+
+type TypeOption = {
+  id: string;
+  name: string;
+  price: number;
+};
 
 type ContractForm = {
   customerId: string;
   typeId: string;
   no?: string;
   dateContract?: string;
+  promote?: number;
+  price?: number;
 };
 
 export default function CreateContractPage() {
@@ -24,14 +31,20 @@ export default function CreateContractPage() {
   const [customerQuery, setCustomerQuery] = useState("");
   const [typeQuery, setTypeQuery] = useState("");
 
+  const [basePrice, setBasePrice] = useState(0);
+  const [promote, setPromote] = useState(0);
+  const [finalPrice, setFinalPrice] = useState(0);
+
   const [form, setForm] = useState<ContractForm>({
     customerId: '',
     typeId: '',
     no: '',
-    dateContract: new Date().toISOString().split('T')[0], // mặc định hôm nay
+    dateContract: new Date().toISOString().split('T')[0],
+    promote: 0,
+    price: 0
   });
 
-  // Load customers và types
+  // Load data
   useEffect(() => {
     fetch('/api/customers')
       .then(res => res.json())
@@ -42,28 +55,62 @@ export default function CreateContractPage() {
       .then(setTypes);
   }, []);
 
+  const selectedCustomer = customers.find(c => c.id === form.customerId);
+  const selectedType = types.find(t => t.id === form.typeId);
+
+  const filteredCustomers =
+    customerQuery === ""
+      ? customers
+      : customers.filter(c =>
+          c.fullName.toLowerCase().includes(customerQuery.toLowerCase()) ||
+          c.phone.includes(customerQuery)
+        );
+
+  const filteredTypes =
+    typeQuery === ""
+      ? types
+      : types.filter(t =>
+          t.name.toLowerCase().includes(typeQuery.toLowerCase())
+        );
+
+  // khi chọn type
+  const handleTypeSelect = (t: TypeOption | null) => {
+    const price = t?.price ?? 0;
+
+    setBasePrice(price);
+    setFinalPrice(price - promote);
+
+    setForm(prev => ({
+      ...prev,
+      typeId: t?.id ?? '',
+      price: price - promote
+    }));
+  };
+
+  // khi nhập khuyến mại
+  const handlePromoteChange = (value: string) => {
+    const p = Number(value) || 0;
+    const final = basePrice - p;
+
+    setPromote(p);
+    setFinalPrice(final);
+
+    setForm(prev => ({
+      ...prev,
+      promote: p,
+      price: final
+    }));
+  };
+
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const selectedCustomer = customers.find(c => c.id === form.customerId);
-  const selectedType = types.find(t => t.id === form.typeId);
-
-  const filteredCustomers = customerQuery === ""
-    ? customers
-    : customers.filter(c =>
-        c.fullName.toLowerCase().includes(customerQuery.toLowerCase()) ||
-        c.phone.includes(customerQuery)
-      );
-
-  const filteredTypes = typeQuery === ""
-    ? types
-    : types.filter(t =>
-        t.name.toLowerCase().includes(typeQuery.toLowerCase())
-      );
+  const formatMoney = (money?: number) =>
+    money?.toLocaleString('vi-VN') + ' đ';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +140,7 @@ export default function CreateContractPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
 
-        {/* Customer Combobox */}
+        {/* Customer */}
         <div>
           <label className="block mb-1">Customer *</label>
           <Combobox
@@ -112,37 +159,31 @@ export default function CreateContractPage() {
                 placeholder="Search customer..."
                 required
               />
+
               <Combobox.Options className="absolute z-10 w-full border mt-1 max-h-60 overflow-y-auto bg-white rounded shadow">
-                {filteredCustomers.length === 0 ? (
-                  <div className="px-2 py-1 text-gray-500">No customers found</div>
-                ) : (
-                  filteredCustomers.map(c => (
-                    <Combobox.Option
-                      key={c.id}
-                      value={c}
-                      className={({ active }) =>
-                        `px-2 py-1 cursor-pointer ${active ? "bg-blue-100" : ""}`
-                      }
-                    >
-                      {c.fullName} ({c.phone})
-                    </Combobox.Option>
-                  ))
-                )}
+                {filteredCustomers.map(c => (
+                  <Combobox.Option
+                    key={c.id}
+                    value={c}
+                    className={({ active }) =>
+                      `px-2 py-1 cursor-pointer ${active ? "bg-blue-100" : ""}`
+                    }
+                  >
+                    {c.fullName} ({c.phone})
+                  </Combobox.Option>
+                ))}
               </Combobox.Options>
             </div>
           </Combobox>
         </div>
 
-        {/* Type Combobox */}
+        {/* Type */}
         <div>
           <label className="block mb-1">Contract Type *</label>
-          <Combobox
-            value={selectedType || null}
-            onChange={(t: TypeOption | null) =>
-              setForm(prev => ({ ...prev, typeId: t?.id ?? '' }))
-            }
-          >
+
+          <Combobox value={selectedType || null} onChange={handleTypeSelect}>
             <div className="relative">
+
               <Combobox.Input
                 className="w-full border px-2 py-1 rounded"
                 displayValue={(t: TypeOption) => t ? t.name : ""}
@@ -150,25 +191,56 @@ export default function CreateContractPage() {
                 placeholder="Search type..."
                 required
               />
+
               <Combobox.Options className="absolute z-10 w-full border mt-1 max-h-60 overflow-y-auto bg-white rounded shadow">
-                {filteredTypes.length === 0 ? (
-                  <div className="px-2 py-1 text-gray-500">No types found</div>
-                ) : (
-                  filteredTypes.map(t => (
-                    <Combobox.Option
-                      key={t.id}
-                      value={t}
-                      className={({ active }) =>
-                        `px-2 py-1 cursor-pointer ${active ? "bg-blue-100" : ""}`
-                      }
-                    >
-                      {t.name}
-                    </Combobox.Option>
-                  ))
-                )}
+
+                {filteredTypes.map(t => (
+                  <Combobox.Option
+                    key={t.id}
+                    value={t}
+                    className={({ active }) =>
+                      `px-2 py-1 cursor-pointer ${active ? "bg-blue-100" : ""}`
+                    }
+                  >
+                    {t.name} - {formatMoney(t.price)}
+                  </Combobox.Option>
+                ))}
+
               </Combobox.Options>
+
             </div>
           </Combobox>
+        </div>
+
+        {/* Giá gốc */}
+        <div>
+          <label className="block mb-1">Giá gốc</label>
+          <input
+            value={formatMoney(basePrice)}
+            readOnly
+            className="w-full border px-2 py-1 rounded bg-gray-100"
+          />
+        </div>
+
+        {/* Khuyến mại */}
+        <div>
+          <label className="block mb-1">Khuyến mại</label>
+          <input
+            type="number"
+            value={promote}
+            onChange={(e) => handlePromoteChange(e.target.value)}
+            className="w-full border px-2 py-1 rounded"
+          />
+        </div>
+
+        {/* Thành tiền */}
+        <div>
+          <label className="block mb-1">Thành tiền</label>
+          <input
+            value={formatMoney(finalPrice)}
+            readOnly
+            className="w-full border px-2 py-1 rounded bg-green-50 font-semibold"
+          />
         </div>
 
         {/* Contract No */}
@@ -202,6 +274,7 @@ export default function CreateContractPage() {
         >
           {saving ? 'Saving...' : 'Create'}
         </button>
+
       </form>
     </div>
   );

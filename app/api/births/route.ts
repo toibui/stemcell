@@ -2,13 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 // GET all birth trackings (kèm Contract + Customer)
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url)
+
+    const barcodeStatus = searchParams.get('barcodeStatus')
+
     const births = await prisma.birthTracking.findMany({
+      where: {
+        ...(barcodeStatus && {
+          barcodeStatus: barcodeStatus as any
+        })
+      },
       include: {
         contract: {
           include: {
-            customer: true, // Lấy thông tin khách hàng từ contract
+            customer: true
           }
         },
         samples: true,
@@ -17,15 +26,17 @@ export async function GET() {
       orderBy: {
         createdAt: 'desc'
       }
-    });
+    })
 
-    return NextResponse.json(births);
+    return NextResponse.json(births)
+
   } catch (err) {
-    console.error(err);
+    console.error(err)
+
     return NextResponse.json(
       { error: 'Failed to fetch birth trackings' },
       { status: 500 }
-    );
+    )
   }
 }
 

@@ -24,9 +24,16 @@ enum BirthStatus {
   cancelled
 }
 
-model Type{
-  id    String   @id @default(uuid())
-  name  String?
+enum BarcodeStatus {
+  NOT_DUE
+  NOT_ATTACHED
+  ATTACHED
+}
+
+model Type {
+  id        String     @id @default(uuid())
+  name      String?
+  price     Decimal?   // dùng Decimal cho tiền tệ
   contracts Contract[]
 }
 
@@ -90,6 +97,11 @@ model Contract {
   no            String?  @unique
   type          Type     @relation(fields: [typeId], references: [id])
   typeId        String
+
+  //add 2 lines
+  promote       Decimal?
+  price         Decimal?
+
   // 👇 THÊM DÒNG NÀY
   birthTracking BirthTracking?
   dateContract  DateTime @default(now())
@@ -112,6 +124,7 @@ model BirthTracking {
   birthType     String?
   babiesCount   Int      @default(1)
 
+  barcodeStatus BarcodeStatus @default(NOT_DUE)
   status        BirthStatus
   note          String?
 

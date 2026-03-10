@@ -17,27 +17,32 @@ const StaffRoles = [
 type StaffRoleType = (typeof StaffRoles)[number];
 
 // GET single staff by ID
-export async function GET(req: Request, context: any) {
-  const { id } = context.params;
+export async function GET(
+  req: Request,
+  context: { params: Promise<{ id: string }> } // params là Promise
+) {
+  const params = await context.params; // unwrap Promise
+  const id = params.id;
+
+  console.log("params:", params); // giờ sẽ ra { id: '...' }
 
   if (!id) {
-    return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    return NextResponse.json({ error: "ID is required" }, { status: 400 });
   }
 
   try {
     const staff = await prisma.staff.findUnique({
-      where: { id },
-      // include relations nếu cần, ví dụ: include: { tasks: true }
+      where: { id }, // UUID string
     });
 
     if (!staff) {
-      return NextResponse.json({ error: 'Staff not found' }, { status: 404 });
+      return NextResponse.json({ error: "Staff not found" }, { status: 404 });
     }
 
     return NextResponse.json(staff);
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (error) {
+    console.error("GET staff error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 

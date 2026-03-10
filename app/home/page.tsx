@@ -18,7 +18,7 @@ export default function Home() {
 
           <div className="flex justify-center gap-6">
             <a
-              href="/login"
+              href="auth/login"
               className="px-8 py-4 bg-blue-600 text-white rounded-2xl shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all duration-300"
             >
               Đăng nhập hệ thống

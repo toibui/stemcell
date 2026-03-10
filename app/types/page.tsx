@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 type TypeItem = {
   id: string;
   name: string;
+  price: number;
 };
 
 export default function TypesPage() {
@@ -61,7 +62,8 @@ export default function TypesPage() {
         <table className="w-full border">
           <thead>
             <tr className="bg-gray-100 text-left">
-              <th className="p-3 border">Tên</th>
+              <th className="p-3 border">Tên gói</th>
+              <th className="p-3 border">Giá gói</th>
               <th className="p-3 border w-40">Hành động</th>
             </tr>
           </thead>
@@ -69,6 +71,9 @@ export default function TypesPage() {
             {types.map(type => (
               <tr key={type.id}>
                 <td className="p-3 border">{type.name}</td>
+                <td className="p-3 border">
+                  {type.price ? Number(type.price).toLocaleString('vi-VN') : ''}
+                </td>
                 <td className="p-3 border space-x-2">
                   <button
                     onClick={() => router.push(`/types/${type.id}`)}

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 export default function CreateTypePage() {
   const router = useRouter();
   const [name, setName] = useState('');
+  const [price, setPrice] = useState(''); // thêm state price
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -16,7 +17,10 @@ export default function CreateTypePage() {
       const res = await fetch('/api/types', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ 
+          name, 
+          price: price ? parseFloat(price) : null // convert string -> number
+        }),
       });
 
       if (!res.ok) throw new Error();
@@ -37,15 +41,31 @@ export default function CreateTypePage() {
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Tên loại */}
           <div>
             <label className="block mb-1 font-medium">
-              Tên loại *
+              Tên loại hợp đồng *
             </label>
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
               required
+              className="w-full border rounded-lg px-3 py-2"
+            />
+          </div>
+
+          {/* Giá hợp đồng */}
+          <div>
+            <label className="block mb-1 font-medium">
+              Giá hợp đồng *
+            </label>
+            <input
+              type="number"
+              value={price}
+              onChange={e => setPrice(e.target.value)}
+              required
+              step="0.01" // nếu muốn decimal
               className="w-full border rounded-lg px-3 py-2"
             />
           </div>

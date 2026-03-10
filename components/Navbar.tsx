@@ -73,6 +73,7 @@ export default function Sidebar() {
           )}
           
           <NavItem href="/channel-marketing" icon={<BarChart3 size={20} />} label="Marketing" pathname={pathname} collapsed={collapsed} />
+          <NavItem href="/types" icon={<BarChart3 size={20} />} label="Gói lưu trữ" pathname={pathname} collapsed={collapsed} />
         </NavGroup>
       </div>
 

@@ -9,6 +9,7 @@ export default function EditTypePage() {
   const id = params?.id as string;
 
   const [name, setName] = useState('');
+  const [price, setPrice] = useState(''); // thêm state price
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -19,7 +20,8 @@ export default function EditTypePage() {
     fetch(`/api/types/${id}`)
       .then(res => res.json())
       .then(data => {
-        setName(data.name);
+        setName(data.name || '');
+        setPrice(data.price ? data.price.toString() : ''); // convert Decimal -> string
         setLoading(false);
       });
   }, [id]);
@@ -32,7 +34,10 @@ export default function EditTypePage() {
       const res = await fetch(`/api/types/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ 
+          name,
+          price: price ? parseFloat(price) : null, // convert string -> number
+        }),
       });
 
       if (!res.ok) throw new Error();
@@ -61,15 +66,31 @@ export default function EditTypePage() {
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Tên loại hợp đồng */}
           <div>
             <label className="block mb-1 font-medium">
-              Tên loại *
+              Tên loại hợp đồng *
             </label>
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
               required
+              className="w-full border rounded-lg px-3 py-2"
+            />
+          </div>
+
+          {/* Giá hợp đồng */}
+          <div>
+            <label className="block mb-1 font-medium">
+              Giá hợp đồng *
+            </label>
+            <input
+              type="number"
+              value={price}
+              onChange={e => setPrice(e.target.value)}
+              required
+              step="0.01"  // nếu muốn decimal
               className="w-full border rounded-lg px-3 py-2"
             />
           </div>

@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // Chuẩn hóa thời gian về đầu ngày và cuối ngày
+    // Chuẩn hóa thời gian
     const fromDate = new Date(from)
     fromDate.setHours(0, 0, 0, 0)
 
@@ -27,7 +27,8 @@ export async function GET(req: NextRequest) {
       totalConsultings,
       totalUniqueConsultedCustomers,
       totalContracts,
-      totalSamples
+      totalSamples,
+      revenueResult
     ] = await Promise.all([
 
       // 1️⃣ Tổng khách hàng tạo mới
@@ -53,17 +54,17 @@ export async function GET(req: NextRequest) {
       // 3️⃣ Số khách hàng được tư vấn (unique customerId)
       (async () => {
         const grouped = await prisma.consulting.groupBy({
-            by: ["customerId"],
-            where: {
+          by: ["customerId"],
+          where: {
             createdAt: {
-                gte: fromDate,
-                lte: toDate
+              gte: fromDate,
+              lte: toDate
             }
-            }
+          }
         })
 
         return grouped.length
-        })(),
+      })(),
 
       // 4️⃣ Tổng hợp đồng được ký
       prisma.contract.count({
@@ -75,7 +76,7 @@ export async function GET(req: NextRequest) {
         }
       }),
 
-      // 5️⃣ Tổng mẫu được lấy (dựa trên ngày sinh thực tế)
+      // 5️⃣ Tổng mẫu được lấy
       prisma.birthTracking.count({
         where: {
           actualBirthAt: {
@@ -84,11 +85,25 @@ export async function GET(req: NextRequest) {
             lte: toDate
           }
         }
-      })
+      }),
 
+      // 6️⃣ Tổng doanh thu
+      prisma.contract.aggregate({
+        _sum: {
+          price: true
+        },
+        where: {
+          dateContract: {
+            gte: fromDate,
+            lte: toDate
+          }
+        }
+      })
     ])
 
-    // 📊 Tính toán thêm
+    const revenue = revenueResult._sum.price || 0
+
+    // 📊 KPI
     const consultRate =
       totalCustomers > 0
         ? (totalUniqueConsultedCustomers / totalCustomers) * 100
@@ -96,7 +111,7 @@ export async function GET(req: NextRequest) {
 
     const conversionRate =
       totalUniqueConsultedCustomers > 0
-        ? (totalConsultings / totalUniqueConsultedCustomers) 
+        ? totalContracts / totalUniqueConsultedCustomers
         : 0
 
     const sampleRate =
@@ -112,6 +127,7 @@ export async function GET(req: NextRequest) {
         totalUniqueConsultedCustomers,
         totalContracts,
         totalSamples,
+        revenue,
 
         // KPI
         consultRate: Number(consultRate.toFixed(2)),
@@ -119,7 +135,6 @@ export async function GET(req: NextRequest) {
         sampleRate: Number(sampleRate.toFixed(2))
       }
     })
-
   } catch (error: any) {
     console.error("Dashboard API Error:", error)
 

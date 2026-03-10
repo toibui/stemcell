@@ -52,7 +52,11 @@ export async function PUT(
         customerId: data.customerId,
         typeId: data.typeId,
         no: data.no ?? null,
-        dateContract: data.dateContract ? new Date(data.dateContract) : undefined
+        dateContract: data.dateContract ? new Date(data.dateContract) : undefined,
+
+        // thêm 2 dòng này
+        promote: data.promote ?? null,
+        price: data.price ?? null
       },
       include: {
         customer: true,

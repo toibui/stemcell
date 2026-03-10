@@ -46,6 +46,7 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+
   const { id } = await params;
 
   if (!id) {
@@ -56,35 +57,55 @@ export async function PUT(
   }
 
   try {
+
     const data = await req.json();
 
-    // ✅ combine date + time thành actualBirthAt
     const actualBirthAt = data.actualBirthAt
-    ? new Date(data.actualBirthAt)
-    : null;
+      ? new Date(data.actualBirthAt)
+      : null;
 
     const updatedBirthTracking = await prisma.birthTracking.update({
       where: { id },
+
       data: {
+
         contract: data.contractId
           ? { connect: { id: data.contractId } }
           : undefined,
+
         edd: data.edd ? new Date(data.edd) : null,
+
         actualBirthAt,
+
         hospitalName: data.hospitalName ?? null,
+
         hospitalAddress: data.hospitalAddress ?? null,
+
         birthType: data.birthType ?? null,
-        babiesCount: data.babiesCount ? Number(data.babiesCount) : 1,
+
+        babiesCount: data.babiesCount
+          ? Number(data.babiesCount)
+          : 1,
+
+        // ⭐ THÊM DÒNG NÀY
+        barcodeStatus: data.barcodeStatus,
+
         status: data.status,
-        note: data.note ?? null,
+
+        note: data.note ?? null
       },
+
       include: {
-        contract: { include: { customer: true } }
+        contract: {
+          include: { customer: true }
+        }
       }
     });
 
     return NextResponse.json(updatedBirthTracking);
+
   } catch (err: any) {
+
     console.error(err);
 
     if (err.code === 'P2025') {
@@ -93,6 +114,7 @@ export async function PUT(
         { status: 404 }
       );
     }
+
     if (err.code === 'P2002') {
       return NextResponse.json(
         { error: 'This contract already has a BirthTracking' },
@@ -101,7 +123,10 @@ export async function PUT(
     }
 
     return NextResponse.json(
-      { error: 'Internal server error', details: err.message },
+      {
+        error: 'Internal server error',
+        details: err.message
+      },
       { status: 500 }
     );
   }
