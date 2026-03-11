@@ -9,6 +9,7 @@ type Customer = {
   phone: string;
   email?: string;
   address?: string;
+  pid?: string;
   dateOfBirth?: string;
   edd?: string;
   births?: any[];
@@ -71,13 +72,15 @@ export default function CustomersPage() {
                 <tr>
                   <th className="p-3 text-left">Họ tên</th>
                   <th className="p-3 text-left">Điện thoại</th>
-                  <th className="p-3 text-left">Email</th>
+                  
                   <th className="p-3 text-left">Ngày sinh</th>
-                  <th className="p-3 text-left">EDD</th>
+                  <th className="p-3 text-left">Dự sinh</th>
+                  <th className="p-3 text-left">PID</th>
                   <th className="p-3 text-left">Nguồn</th>
                   <th className="p-3 text-center">Số lần tư vấn</th>
                   <th className="p-3 text-center">Ngày sinh thực tế</th>
                   <th className="p-3 text-center">Số hợp đồng</th>
+                  <th className="p-3 text-left">Email</th>
                   <th className="p-3 text-center">Hành động</th>
                 </tr>
               </thead>
@@ -89,7 +92,7 @@ export default function CustomersPage() {
                   >
                     <td className="p-3 font-medium">{c.fullName}</td>
                     <td className="p-3">{c.phone}</td>
-                    <td className="p-3">{c.email || '-'}</td>
+                    
                     <td className="p-3">{formatDate(c.dateOfBirth)}</td>
                     <td className="p-3">
                       {c.edd ? (
@@ -99,6 +102,9 @@ export default function CustomersPage() {
                       ) : (
                         '-'
                       )}
+                    </td>
+                    <td className="p-3">
+                      {c.pid || '-'}
                     </td>
                     <td className="p-3">
                       {c.channelMarketing?.name || '-'}
@@ -124,6 +130,7 @@ export default function CustomersPage() {
                           : '-'}
                       </span>
                     </td>
+                    <td className="p-3">{c.email || '-'}</td>
                     <td className="p-3 text-center space-x-3">
                       <Link
                         href={`/customers/${c.id}`}

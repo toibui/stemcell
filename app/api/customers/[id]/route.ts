@@ -51,6 +51,7 @@ export async function PUT(
       data: {
         fullName: data.fullName,
         phone: data.phone,
+        pid: data.pid ?? null,
         email: data.email ?? null,
         address: data.address ?? null,
         dateOfBirth: data.dateOfBirth

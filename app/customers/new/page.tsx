@@ -12,6 +12,7 @@ type CustomerForm = {
   fullName: string;
   phone: string;
   email?: string;
+  pid?: string;
   address?: string;
   dateOfBirth?: string;
   edd?: string;
@@ -27,6 +28,7 @@ export default function CreateCustomerPage() {
     fullName: '',
     phone: '',
     email: '',
+    pid: '',
     address: '',
     dateOfBirth: '',
     edd: '',
@@ -119,6 +121,19 @@ export default function CreateCustomerPage() {
               type="email"
               name="email"
               value={form.email}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          {/* PID */}
+          <div>
+            <label className="block mb-1 font-medium">
+              PID
+            </label>
+            <input
+              type="text"
+              name="pid"
+              value={form.pid}
               onChange={handleChange}
               className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
             />

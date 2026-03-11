@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
       data: {
         fullName: data.fullName,
         phone: data.phone,
+        pid: data.pid || null,
         email: data.email || null,
         address: data.address || null,
         dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,

@@ -12,6 +12,7 @@ type CustomerForm = {
   fullName: string;
   phone: string;
   email?: string;
+  pid?: string;
   address?: string;
   dateOfBirth?: string;
   edd?: string;
@@ -31,6 +32,7 @@ export default function EditCustomerPage() {
     fullName: '',
     phone: '',
     email: '',
+    pid: '',
     address: '',
     dateOfBirth: '',
     edd: '',
@@ -56,6 +58,7 @@ export default function EditCustomerPage() {
         fullName: customer.fullName || '',
         phone: customer.phone || '',
         email: customer.email || '',
+        pid: customer.pid || '',
         address: customer.address || '',
         dateOfBirth: customer.dateOfBirth
           ? customer.dateOfBirth.split('T')[0]
@@ -93,6 +96,7 @@ export default function EditCustomerPage() {
           address: form.address || null,
           dateOfBirth: form.dateOfBirth || null,
           edd: form.edd || null,
+          pid: form.pid || null,
           channelMarketingId: form.channelMarketingId || null,
         }),
       });
@@ -162,6 +166,19 @@ export default function EditCustomerPage() {
               type="email"
               name="email"
               value={form.email}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+          </div>
+          {/* PID */}
+          <div>
+            <label className="block mb-1 font-medium">
+              PID
+            </label>
+            <input
+              type="text"
+              name="pid"
+              value={form.pid}
               onChange={handleChange}
               className="w-full border rounded-lg px-3 py-2"
             />
