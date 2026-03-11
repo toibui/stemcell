@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { useState } from "react"
 import { 
   Users, Baby, FileText, MessageCircle, BarChart3, Grid ,
-  Settings, LogOut, User, Menu, X, 
+  Settings, LogOut, User, Menu, X, HardDrive,
   Target,
   TrendingUp
 } from "lucide-react"
@@ -81,7 +81,7 @@ export default function Sidebar() {
           )}
           
           <NavItem href="/channel-marketing" icon={<BarChart3 size={20} />} label="Marketing" pathname={pathname} collapsed={collapsed} />
-          <NavItem href="/types" icon={<BarChart3 size={20} />} label="Gói lưu trữ" pathname={pathname} collapsed={collapsed} />
+          <NavItem href="/types" icon={<HardDrive size={20} />} label="Gói lưu trữ" pathname={pathname} collapsed={collapsed} />
           <NavItem href="/targets" icon={<Target size={20} />} label="Xây dựng target" pathname={pathname} collapsed={collapsed} />
         </NavGroup>
       </div>
