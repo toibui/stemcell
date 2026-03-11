@@ -110,6 +110,17 @@ model Contract {
   updatedAt     DateTime @updatedAt
 }
 
+model Target {
+  id             String    @id @default(uuid())
+  year           Int
+  month          Int
+  monthlyTarget  Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([year, month]) // tránh duplicate target cùng tháng
+}
+
 model BirthTracking {
   id            String   @id @default(uuid())
 

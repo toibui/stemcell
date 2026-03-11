@@ -5,8 +5,10 @@ import { useSession, signOut } from "next-auth/react"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
 import { 
-  Users, Baby, FileText, MessageCircle, BarChart3, 
-  Settings, LogOut, User, Menu, X 
+  Users, Baby, FileText, MessageCircle, BarChart3, Grid ,
+  Settings, LogOut, User, Menu, X, 
+  Target,
+  TrendingUp
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useSidebar } from "@/context/SidebarContext"
@@ -57,7 +59,13 @@ export default function Sidebar() {
         <NavGroup label="Quản lý khách" collapsed={collapsed}>
           <NavItem href="/customers" icon={<Users size={20} />} label="Khách hàng" pathname={pathname} collapsed={collapsed} />
           <NavItem href="/consultings" icon={<MessageCircle size={20} />} label="Tư vấn" pathname={pathname} collapsed={collapsed} />
-          <NavItem href="/dashboards" icon={<MessageCircle size={20} />} label="Dashboard" pathname={pathname} collapsed={collapsed} />
+         
+        </NavGroup>
+
+        <NavGroup label="Thống kê" collapsed={collapsed}>
+          
+          <NavItem href="/dashboards" icon={<Grid size={20} />} label="Dashboard" pathname={pathname} collapsed={collapsed} />
+          <NavItem href="/kpis" icon={<TrendingUp size={20} />} label="KPIs" pathname={pathname} collapsed={collapsed} />
 
         </NavGroup>
 
@@ -74,6 +82,7 @@ export default function Sidebar() {
           
           <NavItem href="/channel-marketing" icon={<BarChart3 size={20} />} label="Marketing" pathname={pathname} collapsed={collapsed} />
           <NavItem href="/types" icon={<BarChart3 size={20} />} label="Gói lưu trữ" pathname={pathname} collapsed={collapsed} />
+          <NavItem href="/targets" icon={<Target size={20} />} label="Xây dựng target" pathname={pathname} collapsed={collapsed} />
         </NavGroup>
       </div>
 
