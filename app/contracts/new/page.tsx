@@ -73,23 +73,28 @@ export default function CreateContractPage() {
           t.name.toLowerCase().includes(typeQuery.toLowerCase())
         );
 
-  // khi chọn type
+  // Chọn gói
   const handleTypeSelect = (t: TypeOption | null) => {
     const price = t?.price ?? 0;
 
+    const final = price - promote;
+
     setBasePrice(price);
-    setFinalPrice(price - promote);
+    setFinalPrice(final);
 
     setForm(prev => ({
       ...prev,
       typeId: t?.id ?? '',
-      price: price - promote
+      price: final
     }));
   };
 
-  // khi nhập khuyến mại
+  // Nhập khuyến mại
   const handlePromoteChange = (value: string) => {
-    const p = Number(value) || 0;
+    let p = Number(value) || 0;
+
+    if (p > basePrice) p = basePrice;
+
     const final = basePrice - p;
 
     setPromote(p);
@@ -120,7 +125,11 @@ export default function CreateContractPage() {
       const res = await fetch('/api/contracts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        body: JSON.stringify({
+          ...form,
+          promote,
+          price: finalPrice
+        })
       });
 
       if (!res.ok) throw new Error('Failed to create contract');
@@ -143,6 +152,7 @@ export default function CreateContractPage() {
         {/* Customer */}
         <div>
           <label className="block mb-1">Customer *</label>
+
           <Combobox
             value={selectedCustomer || null}
             onChange={(c: CustomerOption | null) =>
@@ -150,6 +160,7 @@ export default function CreateContractPage() {
             }
           >
             <div className="relative">
+
               <Combobox.Input
                 className="w-full border px-2 py-1 rounded"
                 displayValue={(c: CustomerOption) =>
@@ -161,6 +172,7 @@ export default function CreateContractPage() {
               />
 
               <Combobox.Options className="absolute z-10 w-full border mt-1 max-h-60 overflow-y-auto bg-white rounded shadow">
+
                 {filteredCustomers.map(c => (
                   <Combobox.Option
                     key={c.id}
@@ -172,7 +184,9 @@ export default function CreateContractPage() {
                     {c.fullName} ({c.phone})
                   </Combobox.Option>
                 ))}
+
               </Combobox.Options>
+
             </div>
           </Combobox>
         </div>

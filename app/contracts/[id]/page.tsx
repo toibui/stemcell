@@ -67,16 +67,20 @@ export default function EditContractPage() {
 
       const type = typeData.find((t: TypeOption) => t.id === contractData.typeId);
 
-      setBasePrice(type?.price || 0);
-      setPromote(contractData.promote || 0);
-      setFinalPrice(contractData.price || 0);
+      const price = type?.price || 0;
+      const p = contractData.promote || 0;
+      const final = price - p;
+
+      setBasePrice(price);
+      setPromote(p);
+      setFinalPrice(final);
 
       setForm({
         customerId: contractData.customerId || '',
         typeId: contractData.typeId || '',
         no: contractData.no || '',
-        promote: contractData.promote || 0,
-        price: contractData.price || 0,
+        promote: p,
+        price: final,
         dateContract: contractData.dateContract
           ? contractData.dateContract.split('T')[0]
           : new Date().toISOString().split('T')[0],
@@ -104,8 +108,10 @@ export default function EditContractPage() {
         t.name.toLowerCase().includes(typeQuery.toLowerCase())
       );
 
+  // chọn gói
   const handleTypeSelect = (t: TypeOption | null) => {
     const price = t?.price ?? 0;
+
     const final = price - promote;
 
     setBasePrice(price);
@@ -118,8 +124,10 @@ export default function EditContractPage() {
     }));
   };
 
+  // thay đổi promote
   const handlePromoteChange = (value: string) => {
     const p = Number(value) || 0;
+
     const final = basePrice - p;
 
     setPromote(p);
