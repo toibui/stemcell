@@ -17,6 +17,10 @@ type CustomerForm = {
   dateOfBirth?: string;
   edd?: string;
   channelMarketingId?: string;
+  // --- Thêm 3 trường mới ---
+  idno?: string;
+  iddate?: string;
+  idplace?: string;
 };
 
 export default function EditCustomerPage() {
@@ -37,6 +41,9 @@ export default function EditCustomerPage() {
     dateOfBirth: '',
     edd: '',
     channelMarketingId: '',
+    idno: '',
+    iddate: '',
+    idplace: '',
   });
 
   // Load data
@@ -44,32 +51,36 @@ export default function EditCustomerPage() {
     if (!id) return;
 
     const fetchData = async () => {
-      const [customerRes, channelRes] = await Promise.all([
-        fetch(`/api/customers/${id}`),
-        fetch('/api/channel-marketing'),
-      ]);
+      try {
+        const [customerRes, channelRes] = await Promise.all([
+          fetch(`/api/customers/${id}`),
+          fetch('/api/channel-marketing'),
+        ]);
 
-      const customer = await customerRes.json();
-      const channelData = await channelRes.json();
+        const customer = await customerRes.json();
+        const channelData = await channelRes.json();
 
-      setChannels(channelData);
+        setChannels(channelData);
 
-      setForm({
-        fullName: customer.fullName || '',
-        phone: customer.phone || '',
-        email: customer.email || '',
-        pid: customer.pid || '',
-        address: customer.address || '',
-        dateOfBirth: customer.dateOfBirth
-          ? customer.dateOfBirth.split('T')[0]
-          : '',
-        edd: customer.edd
-          ? customer.edd.split('T')[0]
-          : '',
-        channelMarketingId: customer.channelMarketingId || '',
-      });
-
-      setLoading(false);
+        setForm({
+          fullName: customer.fullName || '',
+          phone: customer.phone || '',
+          email: customer.email || '',
+          pid: customer.pid || '',
+          address: customer.address || '',
+          dateOfBirth: customer.dateOfBirth ? customer.dateOfBirth.split('T')[0] : '',
+          edd: customer.edd ? customer.edd.split('T')[0] : '',
+          channelMarketingId: customer.channelMarketingId || '',
+          // --- Gán giá trị cũ cho 3 trường mới ---
+          idno: customer.idno || '',
+          iddate: customer.iddate ? customer.iddate.split('T')[0] : '',
+          idplace: customer.idplace || '',
+        });
+      } catch (error) {
+        console.error("Lỗi khi tải dữ liệu:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchData();
@@ -97,6 +108,10 @@ export default function EditCustomerPage() {
           dateOfBirth: form.dateOfBirth || null,
           edd: form.edd || null,
           pid: form.pid || null,
+          // Cập nhật giá trị mới gửi lên API
+          iddate: form.iddate || null,
+          idno: form.idno || null,
+          idplace: form.idplace || null,
           channelMarketingId: form.channelMarketingId || null,
         }),
       });
@@ -122,73 +137,98 @@ export default function EditCustomerPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-2xl mx-auto bg-white shadow rounded-xl p-6">
-        <h1 className="text-2xl font-bold mb-6">
+        <h1 className="text-2xl font-bold mb-6 text-gray-800">
           Cập nhật khách hàng
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Full Name */}
-          <div>
-            <label className="block mb-1 font-medium">
-              Họ và tên *
-            </label>
-            <input
-              type="text"
-              name="fullName"
-              value={form.fullName}
-              onChange={handleChange}
-              required
-              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block mb-1 font-medium">Họ và tên *</label>
+              <input
+                type="text"
+                name="fullName"
+                value={form.fullName}
+                onChange={handleChange}
+                required
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block mb-1 font-medium">Số điện thoại *</label>
+              <input
+                type="text"
+                name="phone"
+                value={form.phone}
+                onChange={handleChange}
+                required
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
 
-          {/* Phone */}
-          <div>
-            <label className="block mb-1 font-medium">
-              Số điện thoại *
-            </label>
-            <input
-              type="text"
-              name="phone"
-              value={form.phone}
-              onChange={handleChange}
-              required
-              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-            />
+          {/* --- KHU VỰC THÔNG TIN ĐỊNH DANH (MỚI) --- */}
+          <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg space-y-4">
+            <p className="font-semibold text-gray-700 text-sm uppercase">Định danh cá nhân</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-1 font-medium text-sm text-gray-600">Số CMND/CCCD</label>
+                <input
+                  type="text"
+                  name="idno"
+                  value={form.idno}
+                  onChange={handleChange}
+                  className="w-full border rounded-lg px-3 py-2 bg-white"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 font-medium text-sm text-gray-600">Ngày cấp</label>
+                <input
+                  type="date"
+                  name="iddate"
+                  value={form.iddate}
+                  onChange={handleChange}
+                  className="w-full border rounded-lg px-3 py-2 bg-white"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block mb-1 font-medium text-sm text-gray-600">Nơi cấp</label>
+              <input
+                type="text"
+                name="idplace"
+                value={form.idplace}
+                onChange={handleChange}
+                className="w-full border rounded-lg px-3 py-2 bg-white"
+              />
+            </div>
           </div>
 
-          {/* Email */}
-          <div>
-            <label className="block mb-1 font-medium">
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2"
-            />
-          </div>
-          {/* PID */}
-          <div>
-            <label className="block mb-1 font-medium">
-              PID
-            </label>
-            <input
-              type="text"
-              name="pid"
-              value={form.pid}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block mb-1 font-medium text-sm text-gray-600">Email</label>
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                className="w-full border rounded-lg px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block mb-1 font-medium text-sm text-gray-600">PID</label>
+              <input
+                type="text"
+                name="pid"
+                value={form.pid}
+                onChange={handleChange}
+                className="w-full border rounded-lg px-3 py-2"
+              />
+            </div>
           </div>
 
-          {/* Address */}
           <div>
-            <label className="block mb-1 font-medium">
-              Địa chỉ
-            </label>
+            <label className="block mb-1 font-medium text-sm text-gray-600">Địa chỉ</label>
             <input
               type="text"
               name="address"
@@ -198,39 +238,31 @@ export default function EditCustomerPage() {
             />
           </div>
 
-          {/* Date of Birth */}
-          <div>
-            <label className="block mb-1 font-medium">
-              Ngày sinh
-            </label>
-            <input
-              type="date"
-              name="dateOfBirth"
-              value={form.dateOfBirth}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block mb-1 font-medium text-sm text-gray-600">Ngày sinh</label>
+              <input
+                type="date"
+                name="dateOfBirth"
+                value={form.dateOfBirth}
+                onChange={handleChange}
+                className="w-full border rounded-lg px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block mb-1 font-medium text-sm text-gray-600">Ngày dự sinh (EDD)</label>
+              <input
+                type="date"
+                name="edd"
+                value={form.edd}
+                onChange={handleChange}
+                className="w-full border rounded-lg px-3 py-2"
+              />
+            </div>
           </div>
 
-          {/* EDD */}
           <div>
-            <label className="block mb-1 font-medium">
-              Ngày dự sinh (EDD)
-            </label>
-            <input
-              type="date"
-              name="edd"
-              value={form.edd}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2"
-            />
-          </div>
-
-          {/* Channel Marketing */}
-          <div>
-            <label className="block mb-1 font-medium">
-              Nguồn marketing
-            </label>
+            <label className="block mb-1 font-medium text-sm text-gray-600">Nguồn marketing</label>
             <select
               name="channelMarketingId"
               value={form.channelMarketingId}
@@ -246,12 +278,11 @@ export default function EditCustomerPage() {
             </select>
           </div>
 
-          {/* Buttons */}
-          <div className="pt-4 flex justify-end space-x-3">
+          <div className="pt-6 flex justify-end space-x-3 border-t">
             <button
               type="button"
               onClick={() => router.push('/customers')}
-              className="px-4 py-2 border rounded-lg"
+              className="px-4 py-2 border rounded-lg hover:bg-gray-100 transition"
             >
               Huỷ
             </button>
@@ -259,9 +290,9 @@ export default function EditCustomerPage() {
             <button
               type="submit"
               disabled={saving}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg shadow"
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg shadow disabled:opacity-50 transition"
             >
-              {saving ? 'Đang lưu...' : 'Cập nhật'}
+              {saving ? 'Đang lưu...' : 'Cập nhật khách hàng'}
             </button>
           </div>
         </form>

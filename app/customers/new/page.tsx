@@ -17,6 +17,10 @@ type CustomerForm = {
   dateOfBirth?: string;
   edd?: string;
   channelMarketingId?: string;
+  // --- Thêm 3 trường mới vào Type ---
+  idno?: string;
+  iddate?: string;
+  idplace?: string;
 };
 
 export default function CreateCustomerPage() {
@@ -33,6 +37,10 @@ export default function CreateCustomerPage() {
     dateOfBirth: '',
     edd: '',
     channelMarketingId: '',
+    // --- Khởi tạo giá trị mặc định ---
+    idno: '',
+    iddate: '',
+    idplace: '',
   });
 
   useEffect(() => {
@@ -60,6 +68,8 @@ export default function CreateCustomerPage() {
           ...form,
           dateOfBirth: form.dateOfBirth || null,
           edd: form.edd || null,
+          // Ép kiểu ngày cho iddate
+          iddate: form.iddate || null, 
           channelMarketingId: form.channelMarketingId || null,
         }),
       });
@@ -82,68 +92,97 @@ export default function CreateCustomerPage() {
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Full Name */}
-          <div>
-            <label className="block mb-1 font-medium">
-              Họ và tên *
-            </label>
-            <input
-              type="text"
-              name="fullName"
-              value={form.fullName}
-              onChange={handleChange}
-              required
-              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-            />
+          {/* Grid Layout cho Họ tên và Số điện thoại */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block mb-1 font-medium">Họ và tên *</label>
+              <input
+                type="text"
+                name="fullName"
+                value={form.fullName}
+                onChange={handleChange}
+                required
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block mb-1 font-medium">Số điện thoại *</label>
+              <input
+                type="text"
+                name="phone"
+                value={form.phone}
+                onChange={handleChange}
+                required
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
 
-          {/* Phone */}
-          <div>
-            <label className="block mb-1 font-medium">
-              Số điện thoại *
-            </label>
-            <input
-              type="text"
-              name="phone"
-              value={form.phone}
-              onChange={handleChange}
-              required
-              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-            />
+          {/* --- KHU VỰC THÊM MỚI: Định danh cá nhân --- */}
+          <div className="p-4 bg-blue-50 rounded-lg space-y-4">
+            <p className="font-semibold text-blue-700 text-sm uppercase tracking-wider">Thông tin định danh</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-1 font-medium text-sm">Số CMND/CCCD/Hộ chiếu</label>
+                <input
+                  type="text"
+                  name="idno"
+                  value={form.idno}
+                  onChange={handleChange}
+                  placeholder="Nhập số định danh"
+                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 font-medium text-sm">Ngày cấp</label>
+                <input
+                  type="date"
+                  name="iddate"
+                  value={form.iddate}
+                  onChange={handleChange}
+                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block mb-1 font-medium text-sm">Nơi cấp</label>
+              <input
+                type="text"
+                name="idplace"
+                value={form.idplace}
+                onChange={handleChange}
+                placeholder="Ví dụ: Cục Cảnh sát QLHC về trật tự xã hội"
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          {/* ------------------------------------------ */}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div>
+              <label className="block mb-1 font-medium text-sm">Email</label>
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block mb-1 font-medium text-sm">PID</label>
+              <input
+                type="text"
+                name="pid"
+                value={form.pid}
+                onChange={handleChange}
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
 
-          {/* Email */}
           <div>
-            <label className="block mb-1 font-medium">
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          {/* PID */}
-          <div>
-            <label className="block mb-1 font-medium">
-              PID
-            </label>
-            <input
-              type="text"
-              name="pid"
-              value={form.pid}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {/* Address */}
-          <div>
-            <label className="block mb-1 font-medium">
-              Địa chỉ
-            </label>
+            <label className="block mb-1 font-medium text-sm">Địa chỉ</label>
             <input
               type="text"
               name="address"
@@ -153,44 +192,36 @@ export default function CreateCustomerPage() {
             />
           </div>
 
-          {/* Date of Birth */}
-          <div>
-            <label className="block mb-1 font-medium">
-              Ngày sinh
-            </label>
-            <input
-              type="date"
-              name="dateOfBirth"
-              value={form.dateOfBirth}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block mb-1 font-medium text-sm">Ngày sinh</label>
+              <input
+                type="date"
+                name="dateOfBirth"
+                value={form.dateOfBirth}
+                onChange={handleChange}
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block mb-1 font-medium text-sm">Ngày dự sinh (EDD)</label>
+              <input
+                type="date"
+                name="edd"
+                value={form.edd}
+                onChange={handleChange}
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
 
-          {/* EDD */}
           <div>
-            <label className="block mb-1 font-medium">
-              Ngày dự sinh (EDD)
-            </label>
-            <input
-              type="date"
-              name="edd"
-              value={form.edd}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2"
-            />
-          </div>
-
-          {/* Channel Marketing */}
-          <div>
-            <label className="block mb-1 font-medium">
-              Nguồn marketing
-            </label>
+            <label className="block mb-1 font-medium text-sm">Nguồn marketing</label>
             <select
               name="channelMarketingId"
               value={form.channelMarketingId}
               onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2"
+              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
             >
               <option value="">-- Chọn nguồn --</option>
               {channels.map(channel => (
@@ -201,12 +232,11 @@ export default function CreateCustomerPage() {
             </select>
           </div>
 
-          {/* Button */}
-          <div className="pt-4 flex justify-end space-x-3">
+          <div className="pt-4 flex justify-end space-x-3 border-t">
             <button
               type="button"
               onClick={() => router.push('/customers')}
-              className="px-4 py-2 border rounded-lg"
+              className="px-4 py-2 border rounded-lg hover:bg-gray-100 transition"
             >
               Huỷ
             </button>
@@ -214,7 +244,7 @@ export default function CreateCustomerPage() {
             <button
               type="submit"
               disabled={saving}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md disabled:opacity-50 transition"
             >
               {saving ? 'Đang lưu...' : 'Tạo khách hàng'}
             </button>

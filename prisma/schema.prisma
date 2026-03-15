@@ -68,6 +68,12 @@ model Customer {
   email     String?
   address   String?
   pid       String?
+  
+  // add 3 new lines
+  idno      String?
+  iddate    DateTime?
+  idplace   String?
+
   consulting Consulting[]
   channelMarketing ChannelMarketing? @relation(fields: [channelMarketingId], references: [id], onDelete: SetNull)
   channelMarketingId String?

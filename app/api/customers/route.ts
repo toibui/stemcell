@@ -27,6 +27,7 @@ export async function GET() {
 }
 
 // POST create new customer
+// POST create new customer
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
@@ -41,8 +42,12 @@ export async function POST(req: NextRequest) {
         dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
         edd: data.edd ? new Date(data.edd) : null,
         
-        // Gắn ChannelMarketing theo ID nếu có
-        // Lưu ý: Model của bạn dùng channelMarketingId làm field trung gian
+        // --- Thêm 3 trường mới tại đây ---
+        idno: data.idno || null,
+        iddate: data.iddate ? new Date(data.iddate) : null,
+        idplace: data.idplace || null,
+        // ---------------------------------
+
         channelMarketingId: data.channelMarketingId || null,
       },
       include: {
@@ -53,8 +58,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(newCustomer, { status: 201 });
   } catch (err) {
     console.error('Error creating customer:', err);
-    
-    // Trình bày lỗi chi tiết hơn để dễ debug
     return NextResponse.json(
       { error: 'Failed to create customer', details: err instanceof Error ? err.message : 'Unknown error' },
       { status: 500 }

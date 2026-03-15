@@ -60,6 +60,13 @@ export async function PUT(
         edd: data.edd
           ? new Date(data.edd)
           : null,
+        
+        // --- Cập nhật 3 trường mới tại đây ---
+        idno: data.idno ?? null,
+        iddate: data.iddate ? new Date(data.iddate) : null,
+        idplace: data.idplace ?? null,
+        // -------------------------------------
+
         channelMarketingId: data.channelMarketingId ?? null,
       },
       include: {
@@ -69,7 +76,7 @@ export async function PUT(
 
     return NextResponse.json(updatedCustomer);
   } catch (err: any) {
-    console.error(err);
+    console.error('Error updating customer:', err);
 
     if (err.code === 'P2025') {
       return NextResponse.json(
@@ -79,7 +86,7 @@ export async function PUT(
     }
 
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: err.message },
       { status: 500 }
     );
   }

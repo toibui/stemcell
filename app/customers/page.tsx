@@ -12,6 +12,11 @@ type Customer = {
   pid?: string;
   dateOfBirth?: string;
   edd?: string;
+  // --- Thêm 3 trường mới vào Type ---
+  idno?: string;
+  iddate?: string;
+  idplace?: string;
+  // ----------------------------------
   births?: any[];
   consulting?: any[];
   contract?: any[];
@@ -73,6 +78,11 @@ export default function CustomersPage() {
                   <th className="p-3 text-left">Họ tên</th>
                   <th className="p-3 text-left">Điện thoại</th>
                   
+                  {/* --- Header mới --- */}
+                  <th className="p-3 text-left">Số định danh</th>
+                  <th className="p-3 text-left">Ngày/Nơi cấp</th>
+                  {/* ------------------ */}
+
                   <th className="p-3 text-left">Ngày sinh</th>
                   <th className="p-3 text-left">Dự sinh</th>
                   <th className="p-3 text-left">PID</th>
@@ -92,6 +102,14 @@ export default function CustomersPage() {
                   >
                     <td className="p-3 font-medium">{c.fullName}</td>
                     <td className="p-3">{c.phone}</td>
+
+                    {/* --- Dữ liệu mới --- */}
+                    <td className="p-3">{c.idno || '-'}</td>
+                    <td className="p-3 text-xs">
+                      <div>{formatDate(c.iddate)}</div>
+                      <div className="text-gray-400 italic">{c.idplace || ''}</div>
+                    </td>
+                    {/* ------------------ */}
                     
                     <td className="p-3">{formatDate(c.dateOfBirth)}</td>
                     <td className="p-3">
