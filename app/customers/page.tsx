@@ -12,17 +12,12 @@ type Customer = {
   pid?: string;
   dateOfBirth?: string;
   edd?: string;
-  // --- Thêm 3 trường mới vào Type ---
   idno?: string;
   iddate?: string;
   idplace?: string;
-  // ----------------------------------
-  births?: any[];
   consulting?: any[];
   contract?: any[];
-  channelMarketing?: {
-    name: string;
-  } | null;
+  channelMarketing?: { name: string } | null;
 };
 
 export default function CustomersPage() {
@@ -39,9 +34,7 @@ export default function CustomersPage() {
   }, []);
 
   const handleDelete = async (id: string) => {
-    const confirmDelete = window.confirm('Bạn có chắc muốn xoá khách hàng này?');
-    if (!confirmDelete) return;
-
+    if (!window.confirm('Bạn có chắc muốn xoá khách hàng này?')) return;
     await fetch(`/api/customers/${id}`, { method: 'DELETE' });
     setCustomers(prev => prev.filter(c => c.id !== id));
   };
@@ -52,116 +45,122 @@ export default function CustomersPage() {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Danh sách khách hàng</h1>
+    <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Quản lý khách hàng</h1>
         <Link
           href="/customers/new"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg shadow-sm transition-all flex items-center"
         >
-          + Thêm khách hàng
+          <span className="mr-2">+</span> Thêm khách hàng
         </Link>
       </div>
 
       {loading ? (
-        <div className="text-center py-10 text-gray-500">Đang tải dữ liệu...</div>
-      ) : customers.length === 0 ? (
-        <div className="text-center py-10 text-gray-400">
-          Chưa có khách hàng nào
-        </div>
+        <div className="text-center py-20 text-gray-500 animate-pulse">Đang tải dữ liệu khách hàng...</div>
       ) : (
-        <div className="bg-white shadow rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
-                <tr>
-                  <th className="p-3 text-left">Họ tên</th>
-                  <th className="p-3 text-left">Điện thoại</th>
-                  
-                  {/* --- Header mới --- */}
-                  <th className="p-3 text-left">Số định danh</th>
-                  <th className="p-3 text-left">Ngày/Nơi cấp</th>
-                  {/* ------------------ */}
-
-                  <th className="p-3 text-left">Ngày sinh</th>
-                  <th className="p-3 text-left">Dự sinh</th>
-                  <th className="p-3 text-left">PID</th>
-                  <th className="p-3 text-left">Nguồn</th>
-                  <th className="p-3 text-center">Số lần tư vấn</th>
-                  <th className="p-3 text-center">Ngày sinh thực tế</th>
-                  <th className="p-3 text-center">Số hợp đồng</th>
-                  <th className="p-3 text-left">Email</th>
-                  <th className="p-3 text-center">Hành động</th>
+        <div className="bg-white shadow-md rounded-xl border border-gray-200 overflow-hidden">
+          {/* Container cho phép scroll ngang */}
+          <div className="overflow-x-auto overflow-y-auto max-h-[70vh] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+            <table className="w-full text-sm border-collapse relative">
+              <thead className="bg-gray-50 text-gray-600 sticky top-0 z-20 shadow-sm">
+                <tr className="uppercase text-[11px] font-semibold tracking-wider">
+                  {/* Cột cố định bên trái */}
+                  <th className="p-4 text-left sticky left-0 bg-gray-50 z-30 border-b">Khách hàng</th>
+                  <th className="p-4 text-left border-b whitespace-nowrap">Liên hệ</th>
+                  <th className="p-4 text-left border-b whitespace-nowrap">Định danh (ID)</th>
+                  <th className="p-4 text-left border-b whitespace-nowrap">Ngày sinh / Dự sinh</th>
+                  <th className="p-4 text-left border-b whitespace-nowrap">PID / Nguồn</th>
+                  <th className="p-4 text-center border-b whitespace-nowrap">Tư vấn</th>
+                  <th className="p-4 text-center border-b whitespace-nowrap">Hợp đồng</th>
+                  <th className="p-4 text-left border-b whitespace-nowrap">Địa chỉ / Email</th>
+                  {/* Cột cố định bên phải */}
+                  <th className="p-4 text-center sticky right-0 bg-gray-50 z-30 border-b">Thao tác</th>
                 </tr>
               </thead>
-              <tbody>
-                {customers.map(c => (
-                  <tr
-                    key={c.id}
-                    className="border-t hover:bg-gray-50 transition"
-                  >
-                    <td className="p-3 font-medium">{c.fullName}</td>
-                    <td className="p-3">{c.phone}</td>
+              <tbody className="divide-y divide-gray-100">
+                {customers.map((c) => (
+                  <tr key={c.id} className="hover:bg-blue-50/50 transition-colors group">
+                    {/* Cột cố định: Tên */}
+                    <td className="p-4 sticky left-0 bg-white group-hover:bg-blue-50/50 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                      <div className="font-bold text-gray-900 whitespace-nowrap">{c.fullName}</div>
+                      <div className="text-[11px] text-gray-400">ID: {c.id.slice(0, 8)}...</div>
+                    </td>
 
-                    {/* --- Dữ liệu mới --- */}
-                    <td className="p-3">{c.idno || '-'}</td>
-                    <td className="p-3 text-xs">
-                      <div>{formatDate(c.iddate)}</div>
-                      <div className="text-gray-400 italic">{c.idplace || ''}</div>
+                    {/* Liên hệ */}
+                    <td className="p-4 whitespace-nowrap">
+                      <div className="font-medium text-blue-600">{c.phone}</div>
                     </td>
-                    {/* ------------------ */}
-                    
-                    <td className="p-3">{formatDate(c.dateOfBirth)}</td>
-                    <td className="p-3">
-                      {c.edd ? (
-                        <span className="bg-pink-100 text-pink-600 px-2 py-1 rounded-full text-xs">
-                          {formatDate(c.edd)}
-                        </span>
-                      ) : (
-                        '-'
-                      )}
+
+                    {/* Định danh */}
+                    <td className="p-4 whitespace-nowrap">
+                      <div className="text-gray-700">{c.idno || '-'}</div>
+                      <div className="text-[11px] text-gray-400 italic">
+                        {c.iddate ? formatDate(c.iddate) : ''} {c.idplace ? ` tại ${c.idplace}` : ''}
+                      </div>
                     </td>
-                    <td className="p-3">
-                      {c.pid || '-'}
+
+                    {/* Ngày sinh & Dự sinh */}
+                    <td className="p-4 whitespace-nowrap">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-gray-600">🎂 {formatDate(c.dateOfBirth)}</span>
+                        {c.edd && (
+                          <span className="text-[11px] bg-pink-50 text-pink-600 px-2 py-0.5 rounded w-fit font-medium">
+                            👶 Dự sinh: {formatDate(c.edd)}
+                          </span>
+                        )}
+                      </div>
                     </td>
-                    <td className="p-3">
-                      {c.channelMarketing?.name || '-'}
+
+                    {/* PID & Nguồn */}
+                    <td className="p-4 whitespace-nowrap">
+                      <div className="text-gray-700 font-medium">{c.pid || '-'}</div>
+                      <div className="text-[11px] text-indigo-500">{c.channelMarketing?.name || 'Không rõ nguồn'}</div>
                     </td>
-                    <td className="p-3 text-center">
-                      <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs">
+
+                    {/* Tư vấn */}
+                    <td className="p-4 text-center">
+                      <span className="inline-flex items-center justify-center h-6 w-10 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">
                         {c.consulting?.length || 0}
                       </span>
                     </td>
-                    <td className="p-3 text-center">
-                      <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs">
-                        {c.contract?.[0]?.birthTracking?.actualBirthAt
-                          ? new Date(c.contract[0].birthTracking.actualBirthAt).toLocaleDateString('vi-VN')
-                          : '-'}
-                      </span>
+
+                    {/* Hợp đồng */}
+                    <td className="p-4 whitespace-nowrap">
+                      {c.contract && c.contract.length > 0 ? (
+                        <div className="flex flex-col items-center">
+                          <span className="text-green-600 font-semibold">{c.contract[0].no}</span>
+                          <span className="text-[10px] text-gray-400">({formatDate(c.contract[0].dateContract)})</span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-300">-</span>
+                      )}
                     </td>
-                    <td className="p-3 text-center">
-                      <span className="bg-green-100 text-green-600 px-2 py-1 rounded-full text-xs">
-                        {c.contract && c.contract.length > 0
-                          ? `${c.contract[c.contract.length - 1].no} (${new Date(
-                              c.contract[c.contract.length - 1].dateContract
-                            ).toLocaleDateString('vi-VN')})`
-                          : '-'}
-                      </span>
+
+                    {/* Địa chỉ & Email */}
+                    <td className="p-4 max-w-[200px] truncate">
+                      <div className="truncate text-gray-600" title={c.address}>{c.address || '-'}</div>
+                      <div className="text-[11px] text-gray-400 truncate">{c.email || ''}</div>
                     </td>
-                    <td className="p-3">{c.email || '-'}</td>
-                    <td className="p-3 text-center space-x-3">
-                      <Link
-                        href={`/customers/${c.id}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        Sửa
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(c.id)}
-                        className="text-red-500 hover:underline"
-                      >
-                        Xoá
-                      </button>
+
+                    {/* Cột cố định: Thao tác */}
+                    <td className="p-4 text-center sticky right-0 bg-white group-hover:bg-blue-50/50 z-10 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)] whitespace-nowrap">
+                      <div className="flex justify-center gap-2">
+                        <Link
+                          href={`/customers/${c.id}`}
+                          className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md transition-colors"
+                          title="Chỉnh sửa"
+                        >
+                          ✎ Sửa
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(c.id)}
+                          className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                          title="Xoá"
+                        >
+                          🗑
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -170,6 +169,24 @@ export default function CustomersPage() {
           </div>
         </div>
       )}
+
+      {/* CSS Helper */}
+      <style jsx global>{`
+        .scrollbar-thin::-webkit-scrollbar {
+          height: 6px;
+          width: 6px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+          background: #f1f1f1;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 10px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+      `}</style>
     </div>
   );
 }
