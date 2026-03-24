@@ -13,6 +13,7 @@ type Contract = {
   customer: {
     id: string;
     fullName: string;
+    email?: string;
     phone: string;
     idno?: string;
     iddate?: string;
@@ -57,6 +58,7 @@ export default function ContractsPage() {
 
     return (
       c.customer.fullName.toLowerCase().includes(keyword) ||
+      c.customer.email?.includes(keyword) ||
       c.customer.phone.includes(keyword) ||
       c.customer.idno?.includes(keyword) ||
       c.no?.toLowerCase().includes(keyword)
@@ -134,6 +136,9 @@ export default function ContractsPage() {
 
                           <div className="text-blue-600 text-sm">
                             {c.customer.phone}
+                          </div>
+                          <div className="text-blue-600 text-sm">
+                            {c.customer.email}
                           </div>
 
                           {/* CCCD */}
