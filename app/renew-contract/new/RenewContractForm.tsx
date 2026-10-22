@@ -14,12 +14,14 @@ type Renew = {
 type ContractOption = {
   id: string;
   no?: string;
+  typeId: string;
   dateContract: string;
+  type: TypeOption;
   customer: {
     fullName: string;
     phone: string;
   };
-  renewContracts?: Renew[];
+  renews?: Renew[];
 };
 
 type TypeOption = {
@@ -39,6 +41,12 @@ type RenewForm = {
   endDate: string;
 };
 
+const getEndDate = (startDate: string, duration: number) => {
+  const date = new Date(`${startDate}T00:00:00`);
+  date.setFullYear(date.getFullYear() + duration);
+  return date.toISOString().split('T')[0];
+};
+
 export default function RenewContractForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -55,6 +63,7 @@ export default function RenewContractForm() {
   const [basePrice, setBasePrice] = useState(0);
   const [promote, setPromote] = useState(0);
   const [finalPrice, setFinalPrice] = useState(0);
+  const [error, setError] = useState('');
 
   const [form, setForm] = useState<RenewForm>({
     contractId: '',
@@ -69,8 +78,14 @@ export default function RenewContractForm() {
   // 🔥 LOAD DATA
   useEffect(() => {
     Promise.all([
-      fetch('/api/contracts').then(res => res.json()),
-      fetch('/api/types').then(res => res.json())
+      fetch('/api/contracts').then(async res => {
+        if (!res.ok) throw new Error('Không tải được danh sách hợp đồng');
+        return res.json();
+      }),
+      fetch('/api/types').then(async res => {
+        if (!res.ok) throw new Error('Không tải được danh sách gói dịch vụ');
+        return res.json();
+      })
     ]).then(([contractsData, typesData]) => {
       setContracts(contractsData);
       setTypes(typesData);
@@ -80,16 +95,30 @@ export default function RenewContractForm() {
 
         if (contract) {
           const lastEnd =
-            contract.renewContracts?.[0]?.endDate ||
+            contract.renews?.[0]?.endDate ||
             contract.dateContract;
+          const type = typesData.find((t: TypeOption) => t.id === contract.typeId);
+          const startDate = lastEnd.split('T')[0];
+          const endDate = type?.duration
+            ? getEndDate(startDate, type.duration)
+            : '';
 
           setForm(prev => ({
             ...prev,
             contractId: contractIdFromUrl,
-            startDate: lastEnd.split('T')[0]
+            typeId: type?.id ?? '',
+            basePrice: type?.price ?? 0,
+            price: type?.price ?? 0,
+            startDate,
+            endDate
           }));
+          setBasePrice(type?.price ?? 0);
+          setFinalPrice(type?.price ?? 0);
         }
       }
+    }).catch(err => {
+      console.error('Error loading renewal form:', err);
+      setError(err instanceof Error ? err.message : 'Không tải được dữ liệu');
     });
   }, [contractIdFromUrl]);
 
@@ -113,37 +142,44 @@ export default function RenewContractForm() {
         );
 
   const handleContractSelect = (c: ContractOption | null) => {
+    const type = types.find(t => t.id === c?.typeId);
+    const price = type?.price ?? 0;
     setForm(prev => ({
       ...prev,
-      contractId: c?.id ?? ''
+      contractId: c?.id ?? '',
+      typeId: type?.id ?? '',
+      basePrice: price,
+      price,
+      endDate: type?.duration ? getEndDate(form.startDate, type.duration) : ''
     }));
+    setBasePrice(price);
+    setPromote(0);
+    setFinalPrice(price);
   };
 
   const handleTypeSelect = (t: TypeOption | null) => {
     const price = t?.price ?? 0;
-    const final = price - promote;
+    const discount = Math.min(promote, price);
+    const final = price - discount;
 
     setBasePrice(price);
+    setPromote(discount);
     setFinalPrice(final);
 
-    let endDate = '';
-    if (t?.duration) {
-      const d = new Date(form.startDate);
-      d.setFullYear(d.getFullYear() + t.duration);
-      endDate = d.toISOString().split('T')[0];
-    }
+    const endDate = t?.duration ? getEndDate(form.startDate, t.duration) : '';
 
     setForm(prev => ({
       ...prev,
       typeId: t?.id ?? '',
       basePrice: price,
+      promote: discount,
       price: final,
       endDate
     }));
   };
 
   const handlePromoteChange = (value: string) => {
-    let p = Number(value) || 0;
+    let p = Math.max(Number(value) || 0, 0);
     if (p > basePrice) p = basePrice;
 
     const final = basePrice - p;
@@ -162,13 +198,10 @@ export default function RenewContractForm() {
     const { name, value } = e.target;
 
     if (name === 'startDate' && selectedType?.duration) {
-      const d = new Date(value);
-      d.setFullYear(d.getFullYear() + selectedType.duration);
-
       setForm(prev => ({
         ...prev,
         startDate: value,
-        endDate: d.toISOString().split('T')[0]
+        endDate: getEndDate(value, selectedType.duration)
       }));
       return;
     }
@@ -184,21 +217,31 @@ export default function RenewContractForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+
+    if (!form.contractId || !form.typeId || !form.startDate || !form.endDate) {
+      setError('Vui lòng chọn hợp đồng, gói gia hạn và ngày bắt đầu/kết thúc.');
+      return;
+    }
+
     setSaving(true);
 
     try {
-      const res = await fetch('/api/renew-contracts', {
+      const res = await fetch('/api/renew-contract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       });
 
-      if (!res.ok) throw new Error('Failed');
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result.error || result.details || 'Tạo gia hạn thất bại');
+      }
 
-      router.push('/renew-contracts');
+      router.push('/renew-contract');
     } catch (err) {
       console.error(err);
-      alert('Có lỗi khi tạo gia hạn');
+      setError(err instanceof Error ? err.message : 'Có lỗi khi tạo gia hạn');
     } finally {
       setSaving(false);
     }
@@ -243,7 +286,82 @@ export default function RenewContractForm() {
             </Combobox>
           </div>
 
-          {/* 👉 các field khác giữ nguyên */}
+          <div>
+            <label className="block mb-1 font-medium">Gói gia hạn *</label>
+            <Combobox value={selectedType || null} onChange={handleTypeSelect}>
+              <div className="relative">
+                <Combobox.Input
+                  className="w-full border px-2 py-1 rounded"
+                  displayValue={(t: TypeOption) => t ? t.name : ''}
+                  onChange={(e) => setTypeQuery(e.target.value)}
+                />
+                <Combobox.Options className="absolute z-10 w-full border mt-1 bg-white shadow max-h-60 overflow-auto">
+                  {filteredTypes.map(t => (
+                    <Combobox.Option key={t.id} value={t}>
+                      {t.name} - {formatMoney(t.price)}
+                    </Combobox.Option>
+                  ))}
+                </Combobox.Options>
+              </div>
+            </Combobox>
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Giá gói</label>
+            <input
+              value={formatMoney(basePrice)}
+              readOnly
+              className="w-full border px-2 py-1 rounded bg-gray-100"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Giảm giá</label>
+            <input
+              type="number"
+              min="0"
+              max={basePrice}
+              value={promote}
+              onChange={e => handlePromoteChange(e.target.value)}
+              className="w-full border px-2 py-1 rounded"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Thành tiền</label>
+            <input
+              value={formatMoney(finalPrice)}
+              readOnly
+              className="w-full border px-2 py-1 rounded bg-green-50"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Ngày bắt đầu *</label>
+            <input
+              type="date"
+              name="startDate"
+              value={form.startDate}
+              onChange={handleChange}
+              required
+              className="w-full border px-2 py-1 rounded"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Ngày kết thúc *</label>
+            <input
+              type="date"
+              name="endDate"
+              value={form.endDate}
+              onChange={handleChange}
+              required
+              className="w-full border px-2 py-1 rounded"
+            />
+          </div>
+
+          {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+
           <button className="bg-green-600 text-white px-4 py-2 rounded">
             {saving ? 'Đang lưu...' : 'Tạo gia hạn'}
           </button>

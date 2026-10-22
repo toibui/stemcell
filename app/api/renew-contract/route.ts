@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
-import { body } from 'framer-motion/m';
 
 // GET all renews (kèm contract + customer nếu cần)
 export async function GET() {
@@ -36,7 +35,15 @@ export async function POST(req: NextRequest) {
     const data = await req.json();
 
     // ✅ Destructure đúng (FIX lỗi body.typeId)
-    const { contractId, price, startDate, endDate, typeId } = data;
+    const {
+      contractId,
+      price,
+      basePrice,
+      promote = 0,
+      startDate,
+      endDate,
+      typeId
+    } = data;
 
     // =========================
     // 1️⃣ Validate input
@@ -55,9 +62,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!price || isNaN(Number(price))) {
+    const numericPrice = Number(price);
+    const numericBasePrice = Number(basePrice);
+    const numericPromote = Number(promote);
+
+    if (
+      price === undefined ||
+      !Number.isFinite(numericPrice) ||
+      numericPrice < 0
+    ) {
       return NextResponse.json(
         { error: 'price không hợp lệ' },
+        { status: 400 }
+      );
+    }
+
+    if (
+      !Number.isFinite(numericBasePrice) ||
+      numericBasePrice < 0 ||
+      !Number.isFinite(numericPromote) ||
+      numericPromote < 0
+    ) {
+      return NextResponse.json(
+        { error: 'Giá gốc hoặc giảm giá không hợp lệ' },
         { status: 400 }
       );
     }
@@ -130,7 +157,9 @@ export async function POST(req: NextRequest) {
             connect: { id: String(typeId) }
           },
           renewNo,
-          price: new Prisma.Decimal(price),
+          basePrice: new Prisma.Decimal(numericBasePrice),
+          promote: new Prisma.Decimal(numericPromote),
+          price: new Prisma.Decimal(numericPrice),
           startDate: start,
           endDate: end
         }
