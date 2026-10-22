@@ -6,7 +6,7 @@ import LayoutContent from "../components/LayoutContent" // Chúng ta sẽ tạo 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi">
-      <body className="bg-slate-50 font-sans text-slate-900 antialiased">
+      <body className="bg-[var(--color-canvas)] font-sans text-[var(--color-ink)] antialiased">
         <Providers>
           <SidebarProvider>
             {/* LayoutContent là một Client Component, 

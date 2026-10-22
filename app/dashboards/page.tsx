@@ -50,28 +50,25 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchData = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const res = await fetch(`/api/dashboard?from=${from}&to=${to}`)
-
-      if (!res.ok) {
-        throw new Error("Failed to fetch dashboard data")
-      }
-
-      const result = await res.json()
-      setData(result.data)
-    } catch (err: any) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   useEffect(() => {
-    fetchData()
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        const res = await fetch(`/api/dashboard?from=${from}&to=${to}`)
+        if (!res.ok) throw new Error("Failed to fetch dashboard data")
+
+        const result = await res.json()
+        setData(result.data)
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Không tải được dữ liệu")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    void fetchData()
   }, [from, to])
 
   const setPreset = (type: "month" | "30days" | "year") => {
@@ -114,10 +111,10 @@ export default function DashboardPage() {
   if (!data) return null
 
   const funnelData = [
-    { name: "Khách hàng", value: data.totalCustomers, color: "#6366f1" },
-    { name: "KH tư vấn", value: data.totalUniqueConsultedCustomers, color: "#8b5cf6" },
-    { name: "Hợp đồng", value: data.totalContracts, color: "#ec4899" },
-    { name: "Mẫu lấy", value: data.totalSamples, color: "#f43f5e" }
+    { name: "Khách hàng", value: data.totalCustomers, color: "#0f766e" },
+    { name: "KH tư vấn", value: data.totalUniqueConsultedCustomers, color: "#159a8c" },
+    { name: "Hợp đồng", value: data.totalContracts, color: "#43b5a5" },
+    { name: "Mẫu lấy", value: data.totalSamples, color: "#8bd3c7" }
   ]
 
   return (
@@ -271,10 +268,11 @@ export default function DashboardPage() {
         </section>
 
         {/* FUNNEL CHART */}
-        <section className="mt-6 bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
-          <h2 className="text-lg font-black text-slate-800 mb-6">
-            Biểu đồ các chỉ số
-          </h2>
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+          <div className="mb-5">
+            <h2 className="text-lg font-bold text-slate-800">Biểu đồ các chỉ số</h2>
+            <p className="mt-1 text-sm text-slate-500">Tổng quan hành trình khách hàng và mẫu lưu trữ</p>
+          </div>
 
           <FunnelChart data={funnelData} />
         </section>

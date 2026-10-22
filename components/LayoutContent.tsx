@@ -17,7 +17,7 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
       */}
         <main 
         style={{ paddingLeft: collapsed ? '80px' : '256px' }}
-        className="flex-1 transition-all duration-300 ease-in-out bg-slate-50 min-h-screen"
+        className="flex-1 transition-all duration-300 ease-in-out bg-[var(--color-canvas)] min-h-screen"
         >
         <div className="p-8 max-w-[1600px] mx-auto">
             {children}

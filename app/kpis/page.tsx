@@ -2,6 +2,36 @@
 
 import { useEffect, useState } from 'react'
 import { Calendar, Target as TargetIcon, TrendingUp, BarChart3, PieChart } from 'lucide-react'
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
+} from 'recharts'
+
+interface MonthlyKpi {
+  year: number
+  month: number
+  monthlyTarget: number
+  actualRevenue: number
+  difference: number
+}
+
+interface YearlyKpi {
+  year: number
+  yearlyTarget: number
+  actualRevenue: number
+  difference: number
+}
+
+interface KpiResponse {
+  monthly: MonthlyKpi[]
+  yearly: YearlyKpi[]
+}
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('vi-VN', {
@@ -16,14 +46,15 @@ export default function RevenueComparisonPage() {
   const currentYear = today.getFullYear()
 
   const [year, setYear] = useState(currentYear)
-  const [data, setData] = useState<any>(null)
+  const [data, setData] = useState<KpiResponse | null>(null)
   const [loading, setLoading] = useState(false)
 
   const fetchData = async (y: number) => {
     setLoading(true)
     try {
       const res = await fetch(`/api/kpis?year=${y}`)
-      const result = await res.json()
+      if (!res.ok) throw new Error('Không tải được dữ liệu KPI')
+      const result: KpiResponse = await res.json()
       setData(result)
     } catch (err) {
       console.error(err)
@@ -39,6 +70,8 @@ export default function RevenueComparisonPage() {
 
   const yearly = data.yearly[0] || { yearlyTarget: 0, actualRevenue: 0 }
   const completionRate = yearly.yearlyTarget > 0 ? Math.round((yearly.actualRevenue / yearly.yearlyTarget) * 100) : 0
+  const compactCurrency = (value: number) =>
+    new Intl.NumberFormat('vi-VN', { notation: 'compact', maximumFractionDigits: 1 }).format(value)
 
   return (
     <div className="min-h-screen bg-[#f1f5f9] p-4 md:p-8">
@@ -68,7 +101,7 @@ export default function RevenueComparisonPage() {
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">Doanh thu theo năm</h1>
           </div>
         {/* SECTION 1: YEARLY OVERVIEW (HÀNG NGANG) */}
-        <section className="grid grid-cols-4 gap-4">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm transition-hover hover:shadow-md">
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md text-center space-y-2">
               <TargetIcon className="text-indigo-600" size={20} />
@@ -119,6 +152,52 @@ export default function RevenueComparisonPage() {
 
    
         </section>
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+          <div className="mb-5">
+            <h2 className="text-lg font-bold text-slate-800">Mục tiêu và doanh thu theo tháng</h2>
+            <p className="mt-1 text-sm text-slate-500">So sánh thực thu với kế hoạch của năm {year}</p>
+          </div>
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={data.monthly} margin={{ top: 8, right: 12, left: 8, bottom: 4 }} barGap={8}>
+              <CartesianGrid stroke="#e8eff2" strokeDasharray="4 6" vertical={false} />
+              <XAxis
+                dataKey="month"
+                tickFormatter={month => `T${month}`}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#647987', fontSize: 12, fontWeight: 600 }}
+                dy={10}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#8798a2', fontSize: 11 }}
+                tickFormatter={compactCurrency}
+                width={56}
+              />
+              <Tooltip
+                cursor={{ fill: '#f1f7f7' }}
+                contentStyle={{
+                  border: '1px solid #dce8eb',
+                  borderRadius: 14,
+                  boxShadow: '0 8px 24px rgba(20, 43, 59, 0.10)',
+                  fontSize: 13
+                }}
+                labelFormatter={month => `Tháng ${month}`}
+                formatter={value => [formatCurrency(Number(value))]}
+              />
+              <Legend
+                verticalAlign="top"
+                align="right"
+                iconType="circle"
+                iconSize={8}
+                wrapperStyle={{ fontSize: 12, color: '#647987', paddingBottom: 16 }}
+              />
+              <Bar dataKey="monthlyTarget" name="Mục tiêu" fill="#b7d9d5" radius={[6, 6, 0, 0]} maxBarSize={28} />
+              <Bar dataKey="actualRevenue" name="Thực thu" fill="#0f766e" radius={[6, 6, 0, 0]} maxBarSize={28} />
+            </BarChart>
+          </ResponsiveContainer>
+        </section>
         {/* SECTION 1: title */}
           <div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">Chi tiết theo tháng</h1>
@@ -136,7 +215,7 @@ export default function RevenueComparisonPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {data.monthly.map((m: any) => {
+                {data.monthly.map((m) => {
                   const rate = m.monthlyTarget > 0 ? Math.round((m.actualRevenue / m.monthlyTarget) * 100) : 0;
                   return (
                     <tr key={m.month} className="hover:bg-slate-50/50 transition-colors group">
