@@ -18,6 +18,8 @@ type TypeOption = {
   name: string;
   price: number;
   duration?: number;
+  typegroup: string | null;
+  countbaby: string | null;
 };
 
 type RenewForm = {
@@ -109,7 +111,9 @@ export default function EditRenewPage() {
   const filteredTypes = typeQuery === ""
     ? types
     : types.filter(t =>
-        t.name.toLowerCase().includes(typeQuery.toLowerCase())
+        t.name.toLowerCase().includes(typeQuery.toLowerCase()) ||
+        t.typegroup?.toLowerCase().includes(typeQuery.toLowerCase()) ||
+        t.countbaby?.includes(typeQuery)
       );
 
   // chọn contract
@@ -252,6 +256,8 @@ export default function EditRenewPage() {
               {filteredTypes.map(t => (
                 <Combobox.Option key={t.id} value={t}>
                   {t.name} - {formatMoney(t.price)}
+                  {t.typegroup && ` · ${t.typegroup}`}
+                  {t.countbaby && ` · ${t.countbaby} bé`}
                 </Combobox.Option>
               ))}
             </Combobox.Options>

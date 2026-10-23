@@ -35,6 +35,8 @@ model Type {
   name      String?
   price     Decimal?   // dùng Decimal cho tiền tệ
   duration  Int?       // số năm hợp đồng (ví dụ: 1, 2, 3 năm)
+  typegroup String?  // MSCs mô mỡ/ MSCs dây rốn/ Combo Máu và MSCs dây rốn
+  countbaby String? // 1 hoặc 2
   contracts Contract[]
   renews    RenewContract[] // 👈 thêm dòng này
 }
@@ -55,6 +57,7 @@ model Staff {
   processings SampleProcessing[]
   qualityControls QualityControl[]
   birthFollowUps BirthFollowUp[]
+  reconciliations Reconciliation[]
 }
 
 model ChannelMarketing{
@@ -278,4 +281,25 @@ model Storage {
   storedAt DateTime?
   removedAt DateTime?
   status String
+}
+
+model Reconciliation {
+  id              String             @id @default(uuid())
+  title           String             // Tên khoản đối soát / Tên dự án / Nội dung
+  amount          Decimal            // Số tiền đối soát
+  type            String?
+  
+  // Ngày tính toán vào thu nhập hàng tháng (Thường dùng ngày này để query thống kê theo tháng/năm)
+  reconciliationDate DateTime        @default(now()) 
+
+  // Nhân viên phụ trách hoặc người nhập liệu khoản đối soát này (nếu cần theo dõi)
+  staffId         String?
+  staff           Staff?             @relation(fields: [staffId], references: [id], onDelete: SetNull)
+
+  note            String?            // Ghi chú chi tiết
+
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([reconciliationDate])
 }

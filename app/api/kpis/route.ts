@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
         : {},
     });
 
-    // --- Renew (new revenue source) ---
+    // --- Renew (renewal revenue) ---
     const renews = await prisma.renewContract.findMany({
       select: { startDate: true, price: true },
       where: filterYear
@@ -43,10 +43,23 @@ export async function GET(req: NextRequest) {
         : {},
     });
 
-    // 🧠 Gộp revenue
+    // --- Reconciliation (project research revenue) ---
+    const reconciliations = await prisma.reconciliation.findMany({
+      select: { reconciliationDate: true, amount: true },
+      where: filterYear
+        ? {
+            reconciliationDate: {
+              gte: fromDate,
+              lt: toDate,
+            },
+          }
+        : {},
+    });
+
+    // 🧠 Gộp revenue từ Contract, Renew và Reconciliation
     const actualRevenueMap = new Map<string, number>();
 
-    // Contract
+    // 1. Contract
     contracts.forEach(c => {
       if (!c.price) return;
       const year = c.dateContract.getFullYear();
@@ -56,7 +69,7 @@ export async function GET(req: NextRequest) {
       actualRevenueMap.set(key, prev + Number(c.price));
     });
 
-    // Renew
+    // 2. Renew
     renews.forEach(r => {
       if (!r.price) return;
       const year = r.startDate.getFullYear();
@@ -64,6 +77,16 @@ export async function GET(req: NextRequest) {
       const key = `${year}-${month}`;
       const prev = actualRevenueMap.get(key) || 0;
       actualRevenueMap.set(key, prev + Number(r.price));
+    });
+
+    // 3. Reconciliation (Đối soát dự án)
+    reconciliations.forEach(rec => {
+      if (!rec.amount) return;
+      const year = rec.reconciliationDate.getFullYear();
+      const month = rec.reconciliationDate.getMonth() + 1;
+      const key = `${year}-${month}`;
+      const prev = actualRevenueMap.get(key) || 0;
+      actualRevenueMap.set(key, prev + Number(rec.amount));
     });
 
     // --- Monthly ---

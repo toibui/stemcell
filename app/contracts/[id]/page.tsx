@@ -10,6 +10,8 @@ type TypeOption = {
   id: string;
   name: string;
   price: number;
+  typegroup: string | null;
+  countbaby: string | null;
 };
 
 type ContractForm = {
@@ -105,7 +107,9 @@ export default function EditContractPage() {
   const filteredTypes = typeQuery === ""
     ? types
     : types.filter(t =>
-        t.name.toLowerCase().includes(typeQuery.toLowerCase())
+        t.name.toLowerCase().includes(typeQuery.toLowerCase()) ||
+        t.typegroup?.toLowerCase().includes(typeQuery.toLowerCase()) ||
+        t.countbaby?.includes(typeQuery)
       );
 
   // chọn gói
@@ -241,6 +245,8 @@ export default function EditContractPage() {
                       }
                     >
                       {t.name} - {formatMoney(t.price)}
+                      {t.typegroup && ` · ${t.typegroup}`}
+                      {t.countbaby && ` · ${t.countbaby} bé`}
                     </Combobox.Option>
                   ))}
                 </Combobox.Options>

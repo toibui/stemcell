@@ -2,13 +2,15 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { set } from 'date-fns/fp';
+import { BABY_COUNT_OPTIONS, TYPE_GROUP_OPTIONS } from '@/lib/type-options';
 
 export default function CreateTypePage() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [price, setPrice] = useState(''); // thêm state price
   const [duration, setDuration] = useState(''); // thêm state duration
+  const [typegroup, setTypegroup] = useState('');
+  const [countbaby, setCountbaby] = useState('');
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,7 +24,9 @@ export default function CreateTypePage() {
         body: JSON.stringify({ 
           name, 
           price: price ? parseFloat(price) : null, // convert string -> number
-          duration: duration ? parseInt(duration) : null // convert string -> number
+          duration: duration ? parseInt(duration) : null, // convert string -> number
+          typegroup: typegroup || null,
+          countbaby: countbaby || null,
         }),
       });
 
@@ -86,6 +90,34 @@ export default function CreateTypePage() {
               step="1" // nếu muốn number
               className="w-full border rounded-lg px-3 py-2"
             />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Nhóm Type</label>
+            <select
+              value={typegroup}
+              onChange={e => setTypegroup(e.target.value)}
+              className="w-full border rounded-lg px-3 py-2"
+            >
+              <option value="">Chọn nhóm Type</option>
+              {TYPE_GROUP_OPTIONS.map(option => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Số bé</label>
+            <select
+              value={countbaby}
+              onChange={e => setCountbaby(e.target.value)}
+              className="w-full border rounded-lg px-3 py-2"
+            >
+              <option value="">Chọn số bé</option>
+              {BABY_COUNT_OPTIONS.map(option => (
+                <option key={option} value={option}>{option === '1' ? 'Thai đơn' : 'Thai đôi'}</option>
+              ))}
+            </select>
           </div>
 
           <div className="flex justify-end space-x-3">

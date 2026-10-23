@@ -78,6 +78,7 @@ export default function Sidebar() {
           <NavItem href="/dashboards" icon={<LayoutDashboard size={20} strokeWidth={1.8} />} label="Tổng quan Dashboard" pathname={pathname} collapsed={collapsed} />
           <NavItem href="/kpis" icon={<TrendingUp size={20} />} label="Chỉ số KPIs" pathname={pathname} collapsed={collapsed} />
           <NavItem href="/targets" icon={<Target size={20} />} label="Mục tiêu chiến lược" pathname={pathname} collapsed={collapsed} />
+          <NavItem href="/reconciliations" icon={<BarChart3 size={20} />} label="Đối soát doanh thu" pathname={pathname} collapsed={collapsed} />
         </NavGroup>
 
         <NavGroup label="Hệ thống & Vận hành" collapsed={collapsed}>

@@ -27,11 +27,12 @@ export async function GET(req: NextRequest) {
       totalUniqueConsultedCustomers,
       totalContracts,
       totalSamples,
-
-      // 👇 NEW
       contractRevenue,
       renewRevenue,
-      renewCount
+      renewCount,
+      // 👇 Thêm truy vấn tổng tiền đối soát dự án theo khoảng thời gian
+      reconciliationRevenue,
+      reconciliationCount
     ] = await Promise.all([
 
       // 1️⃣ Khách hàng
@@ -98,17 +99,32 @@ export async function GET(req: NextRequest) {
         where: {
           startDate: { gte: fromDate, lte: toDate }
         }
+      }),
+
+      // 💰 9️⃣ Doanh thu đối soát dự án (Reconciliation)
+      prisma.reconciliation.aggregate({
+        _sum: { amount: true },
+        where: {
+          reconciliationDate: { gte: fromDate, lte: toDate }
+        }
+      }),
+
+      // 🔢 🔟 Số lượng khoản đối soát
+      prisma.reconciliation.count({
+        where: {
+          reconciliationDate: { gte: fromDate, lte: toDate }
+        }
       })
     ])
 
-    // 💰 Tổng doanh thu
     const toNumber = (val: any) => Number(val || 0);
 
+    // 💰 Tổng doanh thu gộp (Hợp đồng + Renew + Đối soát dự án)
     const revenue =
       toNumber(contractRevenue._sum.price) +
-      toNumber(renewRevenue._sum.price);
+      toNumber(renewRevenue._sum.price) +
+      toNumber(reconciliationRevenue._sum.amount);
 
-    // 🔢 Tổng deal (nếu bạn muốn tính cả renew)
     const totalDeals = totalContracts + renewCount
 
     // 📊 KPI
@@ -136,11 +152,16 @@ export async function GET(req: NextRequest) {
         totalContracts,
         totalSamples,
 
-        // 👇 NEW
         renewCount,
         totalDeals,
 
-        revenue,
+        // 👇 Trả về chi tiết các nguồn doanh thu để tiện hiển thị trên giao diện nếu cần
+        contractRevenue: toNumber(contractRevenue._sum.price),
+        renewRevenue: toNumber(renewRevenue._sum.price),
+        reconciliationRevenue: toNumber(reconciliationRevenue._sum.amount),
+        reconciliationCount,
+
+        revenue, // Tổng doanh thu tổng hợp
 
         consultRate: Number(consultRate.toFixed(2)),
         conversionRate: Number(conversionRate.toFixed(2)),

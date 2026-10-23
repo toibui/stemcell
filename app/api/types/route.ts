@@ -42,6 +42,9 @@ export async function POST(req: NextRequest) {
       data: {
         name: data.name,
         price: priceValue,
+        duration: Number(data.duration),
+        typegroup: data.typegroup ?? null,
+        countbaby: data.countbaby ?? null,
       },
     });
 

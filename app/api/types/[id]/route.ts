@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 // Định nghĩa interface để đồng bộ với Next.js 15
 interface RouteContext {
@@ -44,15 +45,21 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
       data: {
         name: data.name ?? undefined,
         // Chuyển đổi sang Decimal cho Prisma nếu có dữ liệu
-        price: data.price !== undefined ? Number(data.price) : undefined,
-        duration: data.duration !== undefined ? Number(data.duration) : undefined,
+        price: data.price !== undefined
+          ? data.price === null ? null : Number(data.price)
+          : undefined,
+        duration: data.duration !== undefined
+          ? data.duration === null ? null : Number(data.duration)
+          : undefined,
+        typegroup: data.typegroup !== undefined ? data.typegroup : undefined,
+        countbaby: data.countbaby !== undefined ? data.countbaby : undefined,
       },
     });
 
     return NextResponse.json(updatedType);
-  } catch (err: any) {
+  } catch (err) {
     console.error(err);
-    if (err.code === 'P2025') {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
       return NextResponse.json({ error: 'Type not found' }, { status: 404 });
     }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -72,13 +79,13 @@ export async function DELETE(req: NextRequest, { params }: RouteContext) {
     });
 
     return NextResponse.json({ message: 'Type deleted successfully' });
-  } catch (err: any) {
+  } catch (err) {
     console.error(err);
-    if (err.code === 'P2025') {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
       return NextResponse.json({ error: 'Type not found' }, { status: 404 });
     }
     // Lỗi P2003 là lỗi vi phạm ràng buộc khóa ngoại (Foreign key constraint)
-    if (err.code === 'P2003') {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2003') {
       return NextResponse.json(
         { error: 'Cannot delete Type because it is being used by contracts' },
         { status: 400 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { BABY_COUNT_OPTIONS, TYPE_GROUP_OPTIONS } from '@/lib/type-options';
 
 export default function EditTypePage() {
   const router = useRouter();
@@ -11,6 +12,8 @@ export default function EditTypePage() {
   const [name, setName] = useState('');
   const [price, setPrice] = useState(''); // thêm state price
   const [duration, setDuration] = useState(''); // thêm state duration
+  const [typegroup, setTypegroup] = useState('');
+  const [countbaby, setCountbaby] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -24,6 +27,8 @@ export default function EditTypePage() {
         setName(data.name || '');
         setPrice(data.price ? data.price.toString() : ''); // convert Decimal -> string
         setDuration(data.duration ? data.duration.toString() : ''); // convert Number -> string
+        setTypegroup(data.typegroup || '');
+        setCountbaby(data.countbaby || '');
         setLoading(false);
       });
   }, [id]);
@@ -40,6 +45,8 @@ export default function EditTypePage() {
           name,
           price: price ? parseFloat(price) : null, // convert string -> number
           duration: duration ? parseInt(duration) : null, // convert string -> number
+          typegroup: typegroup || null,
+          countbaby: countbaby || null,
         }),
       });
 
@@ -110,6 +117,37 @@ export default function EditTypePage() {
               step="1"  // nếu muốn number
               className="w-full border rounded-lg px-3 py-2"
             />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Nhóm Type</label>
+            <select
+              value={typegroup}
+              onChange={e => setTypegroup(e.target.value)}
+              className="w-full border rounded-lg px-3 py-2"
+            >
+              <option value="">Chọn nhóm Type</option>
+              {typegroup && !TYPE_GROUP_OPTIONS.some(option => option === typegroup) && (
+                <option value={typegroup}>{typegroup} (giá trị hiện tại)</option>
+              )}
+              {TYPE_GROUP_OPTIONS.map(option => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Số bé</label>
+            <select
+              value={countbaby}
+              onChange={e => setCountbaby(e.target.value)}
+              className="w-full border rounded-lg px-3 py-2"
+            >
+              <option value="">Chọn số bé</option>
+              {BABY_COUNT_OPTIONS.map(option => (
+                <option key={option} value={option}>{option === '1' ? 'Thai đơn' : 'Thai đôi'}</option>
+              ))}
+            </select>
           </div>
 
           <div className="flex justify-end space-x-3">

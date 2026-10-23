@@ -9,7 +9,10 @@ import {
   UserCheck,
   ClipboardList,
   Baby,
-  Calendar
+  Calendar,
+  Layers,
+  Activity,
+  FolderKanban
 } from "lucide-react"
 
 import KPICard from "@/components/dashboard/KPICard"
@@ -34,7 +37,14 @@ interface DashboardData {
   totalConsultings: number
   totalContracts: number
   totalSamples: number
+  renewCount: number
+  
+  // 💰 Tách bạch doanh thu
+  contractRevenue: number
+  renewRevenue: number
+  reconciliationRevenue: number
   revenue: number
+
   consultRate: number
   conversionRate: number
   sampleRate: number
@@ -110,6 +120,8 @@ export default function DashboardPage() {
 
   if (!data) return null
 
+  const patientRevenueTotal = (data.contractRevenue || 0) + (data.renewRevenue || 0)
+
   const funnelData = [
     { name: "Khách hàng", value: data.totalCustomers, color: "#0f766e" },
     { name: "KH tư vấn", value: data.totalUniqueConsultedCustomers, color: "#159a8c" },
@@ -124,9 +136,9 @@ export default function DashboardPage() {
         {/* HEADER */}
         <section className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm flex flex-col xl:flex-row justify-between items-center gap-6">
           <div>
-            <h1 className="text-2xl font-black text-slate-900">Sales Dashboard</h1>
+            <h1 className="text-2xl font-black text-slate-900">Sales & Revenue Dashboard</h1>
             <p className="text-slate-500 text-sm font-medium">
-              Dữ liệu trung tâm tế bào gốc Phenikaa
+              Trung tâm Tế bào gốc Phenikaa - Quản lý tài chính & vận hành
             </p>
           </div>
 
@@ -145,16 +157,13 @@ export default function DashboardPage() {
 
             <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-xl border border-slate-200">
               <Calendar size={16} className="text-slate-400" />
-
               <input
                 type="date"
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
                 className="text-sm font-semibold bg-transparent focus:outline-none"
               />
-
               <span className="text-slate-300">→</span>
-
               <input
                 type="date"
                 value={to}
@@ -165,61 +174,74 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* REVENUE SECTION */}
-        <h2 className="text-lg font-bold text-slate-800 mb-4 ml-2">
-          Theo dõi doanh thu
-        </h2>
-        <section className="flex flex-nowrap gap-6">
+        {/* 💰 REVENUE BREAKDOWN SECTION */}
+        <div>
+          <h2 className="text-lg font-bold text-slate-800 mb-4 ml-2 flex items-center gap-2">
+            <Activity size={20} className="text-emerald-600" /> Phân tích dòng tiền & Doanh thu
+          </h2>
 
-          <div className="flex-1 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-3xl p-6 shadow-lg">
-            <p className="text-sm opacity-80 font-medium">Tổng doanh thu</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            {/* 1. TỔNG DOANH THU GỘP */}
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-3xl p-6 shadow-xl flex flex-col justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wider opacity-70 font-semibold">Tổng doanh thu gộp</p>
+                <h2 className="text-3xl font-black mt-2 text-emerald-400">
+                  {formatCurrency(data.revenue)}
+                </h2>
+              </div>
+              <p className="text-xs text-slate-400 mt-4 pt-4 border-t border-slate-700">
+                Bao gồm: Hợp đồng bệnh nhân + Nghiên cứu dự án
+              </p>
+            </div>
 
-            <h2 className="text-3xl font-black mt-2">
-              {formatCurrency(data.revenue)}
-            </h2>
+            {/* 2. DÒNG TIỀN BỆNH NHÂN */}
+            <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between">
+              <div>
+                <div className="flex justify-between items-center">
+                  <p className="text-sm font-semibold text-blue-600 flex items-center gap-1.5">
+                    <Baby size={16} /> Thu nhập từ Bệnh nhân
+                  </p>
+                  <span className="bg-blue-50 text-blue-700 text-xs px-2.5 py-1 rounded-full font-medium">
+                    Hợp đồng & Gia hạn
+                  </span>
+                </div>
+                <h2 className="text-2xl font-black text-slate-900 mt-3">
+                  {formatCurrency(patientRevenueTotal)}
+                </h2>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between text-xs text-slate-500">
+                <span>Hợp đồng mới: <b>{formatCurrency(data.contractRevenue)}</b></span>
+                <span>Gia hạn: <b>{formatCurrency(data.renewRevenue)}</b></span>
+              </div>
+            </div>
 
-            <p className="text-xs opacity-80 mt-1">
-              Tổng tiền thu được
-            </p>
+            {/* 3. DÒNG TIỀN DỰ ÁN */}
+            <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between">
+              <div>
+                <div className="flex justify-between items-center">
+                  <p className="text-sm font-semibold text-purple-600 flex items-center gap-1.5">
+                    <FolderKanban size={16} /> Đối soát Nghiên cứu Dự án
+                  </p>
+                  <span className="bg-purple-50 text-purple-700 text-xs px-2.5 py-1 rounded-full font-medium">
+                    Quỹ dự án
+                  </span>
+                </div>
+                <h2 className="text-2xl font-black text-slate-900 mt-3">
+                  {formatCurrency(data.reconciliationRevenue)}
+                </h2>
+              </div>
+              <p className="text-xs text-slate-400 mt-4 pt-3 border-t border-slate-100">
+                Khoản thu từ đối soát dòng tiền nghiên cứu độc lập
+              </p>
+            </div>
+
           </div>
-
-          <div className="flex-1 bg-white rounded-3xl p-6 shadow-sm">
-            <p className="text-sm text-slate-500 font-medium">
-              Giá trị hợp đồng trung bình
-            </p>
-
-            <h2 className="text-2xl font-bold text-slate-900 mt-2">
-              {data.totalContracts > 0
-                ? formatCurrency(data.revenue / data.totalContracts)
-                : "0 ₫"}
-            </h2>
-
-            <p className="text-xs text-slate-400 mt-1">
-              Trung bình các hợp đồng
-            </p>
-          </div>
-
-          <div className="flex-1 bg-white rounded-3xl p-6 shadow-sm">
-            <p className="text-sm text-slate-500 font-medium">
-              Doanh thu / Khách tư vấn
-            </p>
-
-            <h2 className="text-2xl font-bold text-slate-900 mt-2">
-              {data.totalUniqueConsultedCustomers > 0
-                ? formatCurrency(data.revenue / data.totalUniqueConsultedCustomers)
-                : "0 ₫"}
-            </h2>
-
-            <p className="text-xs text-slate-400 mt-1">
-              Doanh thu trên khách hàng (đã tư vấn)
-            </p>
-          </div>
-
-        </section>
+        </div>
 
         {/* KPI CARDS */}
         <h2 className="text-lg font-bold text-slate-800 mb-4 ml-2">
-          Chỉ số hiệu suất
+          Chỉ số hiệu suất vận hành
         </h2>
 
         <section className="overflow-x-auto pb-4 scrollbar-hide">
@@ -239,7 +261,6 @@ export default function DashboardPage() {
 
         <section className="overflow-x-auto pb-4 scrollbar-hide">
           <div className="flex flex-nowrap gap-4 min-w-max">
-
             <MetricCard
               label="Process"
               value={`${data.consultRate}%`}
@@ -247,7 +268,6 @@ export default function DashboardPage() {
               variant="indigo"
               icon={<MessageSquare size={16} />}
             />
-
             <MetricCard
               label="Consulting rate"
               value={`${data.conversionRate}`}
@@ -255,7 +275,6 @@ export default function DashboardPage() {
               variant="amber"
               icon={<FileText size={16} />}
             />
-
             <MetricCard
               label="Sample rate"
               value={`${data.sampleRate}%`}
@@ -263,7 +282,6 @@ export default function DashboardPage() {
               variant="rose"
               icon={<FlaskConical size={16} />}
             />
-
           </div>
         </section>
 
