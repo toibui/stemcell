@@ -373,12 +373,12 @@ export default function CreateContractPage() {
                 outsideId: event.target.checked ? previous.outsideId : ''
               }))}
             />
-            Lấy mẫu ngoại viện
+            Không sinh ở Phenikaa (có chi phí ngoại viện)
           </label>
           {form.isOutside && (
             <div>
               <label htmlFor="outsideId" className="mb-1 block">
-                Mức chi phí ngoại viện *
+                Khoảng cách với Phenikaa *
               </label>
               <select
                 id="outsideId"

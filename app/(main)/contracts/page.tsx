@@ -219,9 +219,9 @@ export default function ContractsPage() {
             aria-label="Lọc theo ngoại viện"
             className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
           >
-            <option value="all">Tất cả hợp đồng</option>
-            <option value="outside">Có ngoại viện</option>
-            <option value="no-outside">Không ngoại viện</option>
+            <option value="all">Tất cả</option>
+            <option value="outside">Ngoại viện</option>
+            <option value="no-outside">Phenikaa</option>
           </select>
         </div>
       </section>
