@@ -45,6 +45,7 @@ export default function ContractsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [outsideFilter, setOutsideFilter] = useState('all');
 
   const fetchContracts = () => {
     fetch('/api/contracts')
@@ -119,8 +120,12 @@ export default function ContractsPage() {
     const matchesStatus =
       statusFilter === 'all' || getStatus(getEndDate(c)).key === statusFilter;
     const matchesType = typeFilter === 'all' || c.type.name === typeFilter;
+    const hasOutside = c.isOutside === true || Boolean(c.outside);
+    const matchesOutside =
+      outsideFilter === 'all' ||
+      (outsideFilter === 'outside' ? hasOutside : !hasOutside);
 
-    return matchesSearch && matchesStatus && matchesType;
+    return matchesSearch && matchesStatus && matchesType && matchesOutside;
   });
 
   const contractTypes = [...new Set(contracts.map(c => c.type.name))];
@@ -172,7 +177,7 @@ export default function ContractsPage() {
       </div>
 
       <section className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(240px,1fr)_200px_220px]">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(240px,1fr)_200px_220px_200px]">
           <label className="relative block">
             <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -207,6 +212,16 @@ export default function ContractsPage() {
           >
             <option value="all">Tất cả gói lưu trữ</option>
             {contractTypes.map(type => <option key={type} value={type}>{type}</option>)}
+          </select>
+          <select
+            value={outsideFilter}
+            onChange={e => setOutsideFilter(e.target.value)}
+            aria-label="Lọc theo ngoại viện"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100"
+          >
+            <option value="all">Tất cả hợp đồng</option>
+            <option value="outside">Có ngoại viện</option>
+            <option value="no-outside">Không ngoại viện</option>
           </select>
         </div>
       </section>
