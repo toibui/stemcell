@@ -49,6 +49,7 @@ export default function CreateContractPage() {
 
   const [basePrice, setBasePrice] = useState(0);
   const [promote, setPromote] = useState(0);
+  const [promoteInput, setPromoteInput] = useState('');
   const [finalPrice, setFinalPrice] = useState(0);
 
   const [form, setForm] = useState<ContractForm>({
@@ -109,6 +110,7 @@ export default function CreateContractPage() {
     setTypeQuery('');
     setBasePrice(0);
     setPromote(0);
+    setPromoteInput('');
     setFinalPrice(0);
     setForm(prev => ({ ...prev, typeId: '', promote: 0, price: 0 }));
   };
@@ -116,27 +118,32 @@ export default function CreateContractPage() {
   // Chọn gói
   const handleTypeSelect = (t: TypeOption | null) => {
     const price = t?.price ?? 0;
-
-    const final = price - promote;
+    const discount = Math.min(promote, price);
+    const final = price - discount;
 
     setBasePrice(price);
+    setPromote(discount);
+    setPromoteInput(discount ? discount.toLocaleString('vi-VN') : '');
     setFinalPrice(final);
 
     setForm(prev => ({
       ...prev,
       typeId: t?.id ?? '',
+      promote: discount,
       price: final
     }));
   };
 
   // Nhập khuyến mại
   const handlePromoteChange = (value: string) => {
-    let p = Number(value) || 0;
+    const digits = value.replace(/\D/g, '');
+    let p = Number(digits) || 0;
 
     if (p > basePrice) p = basePrice;
 
     const final = basePrice - p;
 
+    setPromoteInput(p ? p.toLocaleString('vi-VN') : '');
     setPromote(p);
     setFinalPrice(final);
 
@@ -404,15 +411,24 @@ export default function CreateContractPage() {
         {/* PRICE */}
         <div>
           <label className="block mb-1">Giá gốc</label>
-          <input value={formatMoney(basePrice)} readOnly className="w-full border px-2 py-2 rounded bg-gray-100" />
+          <input
+            value={formatMoney(basePrice)}
+            readOnly
+            aria-label="Giá gói lưu trữ"
+            className="w-full border px-2 py-2 rounded bg-gray-100"
+          />
         </div>
 
         <div>
           <label className="block mb-1">Khuyến mại</label>
           <input
-            type="number"
-            value={promote}
+            type="text"
+            inputMode="numeric"
+            value={promoteInput}
             onChange={(e) => handlePromoteChange(e.target.value)}
+            placeholder="0"
+            aria-label="Mức giảm giá"
+            disabled={!form.typeId}
             className="w-full border px-2 py-2 rounded"
           />
         </div>
