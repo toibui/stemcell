@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 export async function GET() {
   try {
     const outsides = await prisma.outside.findMany({
-      orderBy: { name: 'asc' }
+      orderBy: { price: 'asc' }
     });
 
     return NextResponse.json(outsides);
