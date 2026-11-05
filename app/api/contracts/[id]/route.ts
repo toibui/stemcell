@@ -1,12 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+
+type RouteContext = { params: Promise<{ id: string }> };
 
 /**
  * GET contract by ID (kèm Customer, BirthTracking, Type + Renew)
  */
-export async function GET(req: Request, context: any) {
-  const params = await context.params;
-  const { id } = params;
+export async function GET(_req: Request, { params }: RouteContext) {
+  const { id } = await params;
 
   if (!id)
     return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -18,6 +20,7 @@ export async function GET(req: Request, context: any) {
         customer: true,
         birthTracking: true,
         type: true,
+        outside: true,
 
         // 👇 thêm renew
         renews: {
@@ -41,7 +44,7 @@ export async function GET(req: Request, context: any) {
  */
 export async function PUT(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: RouteContext
 ) {
   const { id } = await params;
 
@@ -50,6 +53,34 @@ export async function PUT(
 
   try {
     const data = await req.json();
+
+    let outsideUpdate: { isOutside: boolean; outsideId: string | null } | undefined;
+    if ('isOutside' in data || 'outsideId' in data) {
+      if (data.isOutside !== true) {
+        outsideUpdate = { isOutside: false, outsideId: null };
+      } else {
+        if (typeof data.outsideId !== 'string' || !data.outsideId) {
+          return NextResponse.json(
+            { error: 'Vui lòng chọn mức chi phí ngoại viện' },
+            { status: 400 }
+          );
+        }
+
+        const outsideExists = await prisma.outside.findUnique({
+          where: { id: data.outsideId },
+          select: { id: true }
+        });
+
+        if (!outsideExists) {
+          return NextResponse.json(
+            { error: 'Mức chi phí ngoại viện không hợp lệ' },
+            { status: 400 }
+          );
+        }
+
+        outsideUpdate = { isOutside: true, outsideId: data.outsideId };
+      }
+    }
 
     const updatedContract = await prisma.contract.update({
       where: { id },
@@ -62,7 +93,8 @@ export async function PUT(
           : undefined,
 
         promote: data.promote ?? null,
-        price: data.price ?? null
+        price: data.price ?? null,
+        ...(outsideUpdate ?? {})
 
         // ❗ KHÔNG update renew ở đây
       },
@@ -70,6 +102,7 @@ export async function PUT(
         customer: true,
         birthTracking: true,
         type: true,
+        outside: true,
         renews: {
           orderBy: { renewNo: 'asc' }
         }
@@ -77,10 +110,10 @@ export async function PUT(
     });
 
     return NextResponse.json(updatedContract);
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error(err);
 
-    if (err.code === 'P2025') {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
       return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
     }
 
@@ -91,9 +124,8 @@ export async function PUT(
 /**
  * DELETE contract by ID
  */
-export async function DELETE(req: Request, context: any) {
-  const params = await context.params;
-  const { id } = params;
+export async function DELETE(_req: Request, { params }: RouteContext) {
+  const { id } = await params;
 
   if (!id)
     return NextResponse.json({ error: 'ID is required' }, { status: 400 });

@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
           no: true,
           dateContract: true,
           price: true,
+          outside: { select: { price: true } },
           customer: { select: { fullName: true, phone: true } },
           type: { select: { name: true } }
         },
@@ -75,7 +76,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       contracts: contracts.map((contract) => ({
         ...contract,
-        price: Number(contract.price || 0)
+        price: Number(contract.price || 0) + Number(contract.outside?.price || 0)
       })),
       renewals: renewals.map((renewal) => ({
         ...renewal,

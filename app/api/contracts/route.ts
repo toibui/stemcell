@@ -9,6 +9,7 @@ export async function GET() {
         customer: true,
         birthTracking: true,
         type: true,
+        outside: true,
 
         // 🔥 chỉ lấy renew mới nhất
         renews: {
@@ -90,6 +91,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const isOutside = data.isOutside === true;
+    let outsideId: string | null = null;
+
+    if (isOutside) {
+      if (typeof data.outsideId !== 'string' || !data.outsideId) {
+        return NextResponse.json(
+          { error: 'Vui lòng chọn mức chi phí ngoại viện' },
+          { status: 400 }
+        );
+      }
+
+      const outsideExists = await prisma.outside.findUnique({
+        where: { id: data.outsideId },
+        select: { id: true }
+      });
+
+      if (!outsideExists) {
+        return NextResponse.json(
+          { error: 'Mức chi phí ngoại viện không hợp lệ' },
+          { status: 400 }
+        );
+      }
+
+      outsideId = data.outsideId;
+    }
+
     // 2️⃣ Validate dateContract
     let contractDate = new Date();
     if (data.dateContract) {
@@ -100,14 +127,6 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-    }
-
-    // 🔥 3️⃣ Auto tính endDate (optional)
-    let endDate = null;
-    if (typeExists.duration) {
-      const d = new Date(contractDate);
-      d.setFullYear(d.getFullYear() + typeExists.duration);
-      endDate = d;
     }
 
     // 4️⃣ Create
@@ -122,6 +141,8 @@ export async function POST(req: NextRequest) {
 
         price: data.price ?? null,
         promote: data.promote ?? null,
+        isOutside,
+        outsideId,
 
         birthTracking: {
           create: {
@@ -136,6 +157,7 @@ export async function POST(req: NextRequest) {
       include: {
         customer: true,
         type: true,
+        outside: true,
         birthTracking: true,
         renews: true
       }

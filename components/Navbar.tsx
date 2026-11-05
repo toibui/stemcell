@@ -7,7 +7,7 @@ import { useState } from "react"
 import { 
   Users, Baby, FileText, Stethoscope, BarChart3, LayoutDashboard,
   LogOut, User, Menu, X, Database,
-  Target, TrendingUp, ShieldCheck, Dna
+  Target, TrendingUp, ShieldCheck, Dna, Truck
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useSidebar } from "@/context/SidebarContext"
@@ -72,6 +72,7 @@ export default function Sidebar() {
           <NavItem href="/birthtracking" icon={<Baby size={20} />} label="Theo dõi sinh & Mẫu" pathname={pathname} collapsed={collapsed} />
           <NavItem href="/contracts" icon={<FileText size={20} />} label="Hợp đồng lưu trữ" pathname={pathname} collapsed={collapsed} />
           <NavItem href="/types" icon={<Database size={20} strokeWidth={1.8} />} label="Gói lưu trữ Bio" pathname={pathname} collapsed={collapsed} />
+          <NavItem href="/outsides" icon={<Truck size={20} />} label="Chi phí ngoại viện" pathname={pathname} collapsed={collapsed} />
         </NavGroup>
 
         <NavGroup label="Phân tích & Hiệu suất" collapsed={collapsed}>

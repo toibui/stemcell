@@ -19,7 +19,11 @@ export async function GET(req: NextRequest) {
 
     // --- Contract (initial revenue) ---
     const contracts = await prisma.contract.findMany({
-      select: { dateContract: true, price: true },
+      select: {
+        dateContract: true,
+        price: true,
+        outside: { select: { price: true } }
+      },
       where: filterYear
         ? {
             dateContract: {
@@ -61,12 +65,14 @@ export async function GET(req: NextRequest) {
 
     // 1. Contract
     contracts.forEach(c => {
-      if (!c.price) return;
       const year = c.dateContract.getFullYear();
       const month = c.dateContract.getMonth() + 1;
       const key = `${year}-${month}`;
       const prev = actualRevenueMap.get(key) || 0;
-      actualRevenueMap.set(key, prev + Number(c.price));
+      actualRevenueMap.set(
+        key,
+        prev + Number(c.price || 0) + Number(c.outside?.price || 0)
+      );
     });
 
     // 2. Renew
@@ -125,8 +131,11 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ monthly, yearly });
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("GET /api/kpis error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

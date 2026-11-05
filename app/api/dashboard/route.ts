@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
       totalUniqueConsultedCustomers,
       totalContracts,
       totalSamples,
-      contractRevenue,
+      contractsForRevenue,
       renewRevenue,
       renewCount,
       // 👇 Thêm truy vấn tổng tiền đối soát dự án theo khoảng thời gian
@@ -79,8 +79,11 @@ export async function GET(req: NextRequest) {
       }),
 
       // 💰 6️⃣ Doanh thu contract
-      prisma.contract.aggregate({
-        _sum: { price: true },
+      prisma.contract.findMany({
+        select: {
+          price: true,
+          outside: { select: { price: true } }
+        },
         where: {
           dateContract: { gte: fromDate, lte: toDate }
         }
@@ -117,11 +120,21 @@ export async function GET(req: NextRequest) {
       })
     ])
 
-    const toNumber = (val: any) => Number(val || 0);
+    const toNumber = (val: unknown) => Number(val || 0);
+
+    const contractBaseRevenue = contractsForRevenue.reduce(
+      (total, contract) => total + toNumber(contract.price),
+      0
+    );
+    const outsideRevenue = contractsForRevenue.reduce(
+      (total, contract) => total + toNumber(contract.outside?.price),
+      0
+    );
+    const contractRevenue = contractBaseRevenue + outsideRevenue;
 
     // 💰 Tổng doanh thu gộp (Hợp đồng + Renew + Đối soát dự án)
     const revenue =
-      toNumber(contractRevenue._sum.price) +
+      contractRevenue +
       toNumber(renewRevenue._sum.price) +
       toNumber(reconciliationRevenue._sum.amount);
 
@@ -156,7 +169,8 @@ export async function GET(req: NextRequest) {
         totalDeals,
 
         // 👇 Trả về chi tiết các nguồn doanh thu để tiện hiển thị trên giao diện nếu cần
-        contractRevenue: toNumber(contractRevenue._sum.price),
+        contractRevenue,
+        outsideRevenue,
         renewRevenue: toNumber(renewRevenue._sum.price),
         reconciliationRevenue: toNumber(reconciliationRevenue._sum.amount),
         reconciliationCount,
@@ -168,13 +182,13 @@ export async function GET(req: NextRequest) {
         sampleRate: Number(sampleRate.toFixed(2))
       }
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Dashboard API Error:", error)
 
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Internal Server Error"
+        error: error instanceof Error ? error.message : "Internal Server Error"
       },
       { status: 500 }
     )

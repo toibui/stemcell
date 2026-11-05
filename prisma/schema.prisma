@@ -31,14 +31,26 @@ enum BarcodeStatus {
 }
 
 model Type {
-  id        String     @id @default(uuid())
+  id        String          @id @default(uuid())
   name      String?
-  price     Decimal?   // dùng Decimal cho tiền tệ
-  duration  Int?       // số năm hợp đồng (ví dụ: 1, 2, 3 năm)
-  typegroup String?  // MSCs mô mỡ/ MSCs dây rốn/ Combo Máu và MSCs dây rốn
-  countbaby String? // 1 hoặc 2
+  price     Decimal?        // dùng Decimal cho tiền tệ
+  duration  Int?            // số năm hợp đồng (ví dụ: 1, 2, 3 năm)
+  typegroup String?         // MSCs mô mỡ/ MSCs dây rốn/ Combo Máu và MSCs dây rốn
+  countbaby String?         // 1 hoặc 2
   contracts Contract[]
-  renews    RenewContract[] // 👈 thêm dòng này
+  renews    RenewContract[] 
+}
+
+// 👇 THÊM BẢNG OUTSIDE (CHI PHÍ VẬN CHUYỂN MẪU NGOẠI VIỆN)
+model Outside {
+  id          String     @id @default(uuid())
+  name        String     // Tên/Khoảng cách (VD: Vận chuyển mẫu trong thành phố Hà Nội, < 80km,...)
+  price       Decimal    // Chi phí vận chuyển tương ứng
+  description String?    // Ghi chú thêm nếu có
+  contracts   Contract[]
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 model Staff {
@@ -49,25 +61,25 @@ model Staff {
 
   role      StaffRole
   isActive  Boolean @default(true)
-  password String
+  password  String
 
-  createdAt DateTime @default(now())
-  consultings Consulting[]
+  createdAt       DateTime @default(now())
+  consultings     Consulting[]
   samplesCollected Sample[]
-  processings SampleProcessing[]
+  processings     SampleProcessing[]
   qualityControls QualityControl[]
-  birthFollowUps BirthFollowUp[]
+  birthFollowUps  BirthFollowUp[]
   reconciliations Reconciliation[]
 }
 
 model ChannelMarketing{
-  id        String   @id @default(uuid())
+  id        String     @id @default(uuid())
   name      String 
   customers Customer[]
 }
 
 model Customer {
-  id        String   @id @default(uuid())
+  id        String     @id @default(uuid())
   fullName  String
   phone     String
   email     String?
@@ -84,14 +96,14 @@ model Customer {
   channelMarketingId String?
   dateOfBirth  DateTime?
   edd          DateTime?
-  contract    Contract[]
+  contract     Contract[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Consulting {
-  id        String   @id @default(uuid())
+  id        String     @id @default(uuid())
   customer  Customer @relation(fields: [customerId], references: [id])
   customerId String
   Content   String?
@@ -101,18 +113,22 @@ model Consulting {
   createdAt DateTime @default(now())
 }
 
-
 model Contract {
-  id            String   @id @default(uuid())
-  customer      Customer @relation(fields: [customerId], references: [id])
+  id            String        @id @default(uuid())
+  customer      Customer      @relation(fields: [customerId], references: [id])
   customerId    String
-  no            String?  @unique
-  type          Type     @relation(fields: [typeId], references: [id])
+  no            String?       @unique
+  type          Type          @relation(fields: [typeId], references: [id])
   typeId        String
 
-  //add 2 lines
+  // add 2 lines
   promote       Decimal?
   price         Decimal?
+
+  // 👇 BỔ SUNG PHẦN LẤY MẪU NGOẠI VIỆN
+  isOutside     Boolean?       @default(false) // Có chọn sinh/lấy mẫu ngoại viện hay không
+  outsideId     String?
+  outside       Outside?      @relation(fields: [outsideId], references: [id], onDelete: SetNull)
 
   // 👇 THÊM DÒNG NÀY
   birthTracking BirthTracking?
@@ -120,9 +136,9 @@ model Contract {
   // 👇 Quan hệ 1 - N
   renews        RenewContract[]
 
-  dateContract  DateTime @default(now())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  dateContract  DateTime      @default(now())
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
 model RenewContract {
@@ -162,7 +178,7 @@ model Target {
 }
 
 model BirthTracking {
-  id            String   @id @default(uuid())
+  id            String    @id @default(uuid())
 
   contract      Contract? @relation(fields: [contractId], references: [id])
   contractId    String?   @unique
@@ -188,30 +204,30 @@ model BirthTracking {
 }
 
 model BirthFollowUp {
-  id        String   @id @default(uuid())
+  id        String       @id @default(uuid())
   birth     BirthTracking @relation(fields: [birthId], references: [id])
-  birthId  String
+  birthId   String
 
   followType String
   plannedDate DateTime?
   contactedAt DateTime?
-  staff Staff @relation(fields:[staffId], references: [id])
-  staffId String
-  note    String?
+  staff     Staff @relation(fields:[staffId], references: [id])
+  staffId   String
+  note      String?
 }
 
 model Sample {
-  id        String   @id @default(uuid())
+  id        String       @id @default(uuid())
   birth     BirthTracking @relation(fields: [birthId], references: [id])
-  birthId  String
+  birthId   String
 
   babyOrder Int
   collectedBy Staff @relation(fields: [staffId], references: [id])
-  staffId String
+  staffId   String
   collectedAt DateTime?
   condition String?
 
-  processing SampleProcessing[]     // 1 Sample có nhiều Processings
+  processing SampleProcessing[]      // 1 Sample có nhiều Processings
   externalTests ExternalTest[]      // 1 Sample có nhiều ExternalTests
   qualityControl QualityControl[]   // 1 Sample có nhiều QC
   storage Storage[]                 // 1 Sample có thể được lưu nhiều lần
@@ -221,20 +237,20 @@ model Sample {
 }
 
 model SampleProcessing {
-  id        String   @id @default(uuid())
-  sample    Sample   @relation(fields: [sampleId], references: [id])
+  id        String    @id @default(uuid())
+  sample    Sample    @relation(fields: [sampleId], references: [id])
   sampleId  String
 
   processedBy Staff @relation(fields: [staffId], references: [id])
-  staffId String
+  staffId   String
   processedAt DateTime?
   note String?
 }
 
 model ExternalTest {
-  id        String   @id @default(uuid())
-  sample    Sample   @relation(fields: [sampleId], references: [id])
-  sampleId String
+  id        String    @id @default(uuid())
+  sample    Sample    @relation(fields: [sampleId], references: [id])
+  sampleId  String
 
   labName String
   sentAt DateTime?
@@ -244,9 +260,9 @@ model ExternalTest {
 }
 
 model QualityControl {
-  id        String   @id @default(uuid())
-  sample    Sample   @relation(fields: [sampleId], references: [id])
-  sampleId String
+  id        String    @id @default(uuid())
+  sample    Sample    @relation(fields: [sampleId], references: [id])
+  sampleId  String
 
   qcStaff Staff @relation(fields: [staffId], references: [id])
   staffId String
@@ -256,27 +272,27 @@ model QualityControl {
 }
 
 model ResultQualityControl{
-  id  String   @id @default(uuid())
+  id String   @id @default(uuid())
   qualityControl QualityControl   @relation(fields: [qcId], references: [id])
   qcId String
   status String
 }
 
 model StorageTank {
-  id        String   @id @default(uuid())
-  tankCode  String   @unique
+  id        String    @id @default(uuid())
+  tankCode  String    @unique
   description String?
   location String?
   storages Storage[]
 }
 
 model Storage {
-  id        String   @id @default(uuid())
-  sample    Sample   @relation(fields: [sampleId], references: [id])
-  sampleId String
+  id        String    @id @default(uuid())
+  sample    Sample    @relation(fields: [sampleId], references: [id])
+  sampleId  String
 
   tank     StorageTank @relation(fields: [tankId], references: [id])
-  tankId  String
+  tankId   String
 
   storedAt DateTime?
   removedAt DateTime?
@@ -289,10 +305,8 @@ model Reconciliation {
   amount          Decimal            // Số tiền đối soát
   type            String?
   
-  // Ngày tính toán vào thu nhập hàng tháng (Thường dùng ngày này để query thống kê theo tháng/năm)
-  reconciliationDate DateTime        @default(now()) 
+  reconciliationDate DateTime        @default(now())  
 
-  // Nhân viên phụ trách hoặc người nhập liệu khoản đối soát này (nếu cần theo dõi)
   staffId         String?
   staff           Staff?             @relation(fields: [staffId], references: [id], onDelete: SetNull)
 
